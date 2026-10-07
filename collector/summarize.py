@@ -99,7 +99,13 @@ def _json_iste(client, ayar, sistem, icerik, sema, max_tokens=4000):
         log.warning("Claude isteği reddetti")
         return None
     metin = next((b.text for b in r.content if b.type == "text"), None)
-    return json.loads(metin) if metin else None
+    if not metin:
+        return None
+    try:
+        return json.loads(metin)
+    except json.JSONDecodeError as e:
+        log.warning("Claude yanıtı JSON olarak ayrıştırılamadı: %s", e)
+        return None
 
 
 def _haber_metni(haberler):
