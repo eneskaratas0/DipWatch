@@ -14,6 +14,7 @@ from .config import Kaynak
 
 UA = "Mozilla/5.0 (compatible; DipWatch/0.2; +haber-izleme)"
 _ETIKET = re.compile(r"<[^>]+>")
+GN_MIN_KELIME = 4
 _IZLEME = re.compile(r"^(utm_|fbclid|gclid|at_|cmpid|ocid)")
 
 
@@ -67,8 +68,15 @@ def cek(k: Kaynak, zaman_asimi: int = 20):
         if k.yontem == "google_news":
             # Google News başlıkları "Başlık - Yayın" biçiminde gelir
             yayin = (e.get("source") or {}).get("title")
-            if yayin and baslik.endswith(" - " + yayin):
+            # etiket sayfalarında ek iki kez gelebilir: "decentralization - Daily Sabah - Daily Sabah"
+            # başlıksız sayfalar yalnızca "- Yayın" olarak gelir; baştaki boşluk onu da yakalar
+            baslik = " " + baslik
+            while yayin and baslik.endswith(" - " + yayin):
                 baslik = baslik[: -len(yayin) - 3]
+            baslik = baslik.strip()
+            # site: sorgusu yazar, etiket ve bölüm sayfalarını da döndürür ("Energy", "Haaretz Cartoon")
+            if len(baslik.split()) < GN_MIN_KELIME:
+                continue
             ozet = ""  # GN açıklaması yalnızca başlığın tekrarı
         else:
             ozet = temizle(e.get("summary", ""))
