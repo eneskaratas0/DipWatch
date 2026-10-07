@@ -73,6 +73,11 @@ istenirse klasör olduğu gibi GitHub Pages, Netlify vb. bir yere konabilir (lin
 - Listelerde arama kutusu ve "tek kaynaklı olayları da göster" seçeneği var. Varsayılan olarak yalnızca birden fazla
   kaynağın haber yaptığı olaylar görünür (tek kaynaklı haberlerin çoğu gürültü). JavaScript kapalıysa hepsi görünür.
 
+Tasarım `.claude/skills/` altındaki `frontend-design` ve `ui-ux-pro-max` skill'lerine göre yapıldı: kâğıt rengi zemin,
+başlıklarda Newsreader, arayüzde Public Sans yazı tipi; renk yalnızca bölgeyi gösterir. Ana sayfadaki renkli şerit,
+birden fazla kaynaklı olayların bölgelere dağılımını gösterir ve bölge sayfalarına götürür. Koyu tema ve telefon ekranı desteklenir.
+Yazı tipleri Google Fonts'tan gelir; internet yoksa sistem yazı tipleri kullanılır.
+
 Site her çalıştırmada `events.json`'dan baştan üretilir; süresi dolan olayların sayfaları silinir.
 `python -m web --girdi baska.json --cikti baska_klasor/` ile yollar değiştirilebilir. Test: `python -m tests.test_web`.
 
