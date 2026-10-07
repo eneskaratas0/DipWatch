@@ -19,6 +19,7 @@ python -m tests.test_collector        # ağsız test (sahte beslemeler + sahte C
 python -m web                         # data/events.json -> public/ (site, bkz. aşağısı)
 python -m collector dongu --site      # her turdan sonra siteyi de yeniden oluştur
 python -m tests.test_telegram         # Telegram bildirimlerinin ağsız testi
+python test_feeds.py sonuc.json       # sources.yaml'daki tüm beslemeleri (kapalılar dahil) gerçekten dener
 ```
 
 ## API anahtarı
@@ -139,3 +140,10 @@ başlatmak gerekmez.
 
 **İlk çalıştırma**: son 72 saatin yüzlerce olayını birden göndermemek için ilk turda yalnızca "bildirimler açıldı"
 mesajı gelir ve o anki olaylar görüldü sayılır. Bundan sonra çıkan yeni ve büyüyen olaylar bildirilir.
+
+## Güvenlik
+
+Proje, [OWASP Top 10](https://owasp.org/www-project-top-ten/) esas alınarak tarandı; sonuçlar
+[`security-review-2026-10-08.md`](security-review-2026-10-08.md) dosyasında. Özet: SQL sorguları parametreli,
+HTML/Telegram çıktıları `html.escape` ile kaçırılıyor, `.env` dışında hiçbir yerde anahtar yok; yüksek
+güvenilirlikli bir açık bulunmadı.
