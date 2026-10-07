@@ -1,4 +1,8 @@
-# DipWatch toplayıcı (2. adım)
+# DipWatch
+
+Uluslararası siyasetteki gelişmeleri izlemek için haber toplayıcı (2. adım) ve web sitesi (3. adım).
+
+## Toplayıcı (2. adım)
 
 `sources.yaml` içindeki beslemeleri düzenli aralıkla çeker, aynı olayı anlatan haberleri tek bir
 **olay** altında toplar, Claude ile her olaya Türkçe başlık ve özet yazar, kaynak linklerini altında listeler.
@@ -12,6 +16,8 @@ python -m collector tur               # tek tur
 python -m collector dongu --aralik 300  # her 5 dakikada bir
 python -m collector feed-durum        # hangi besleme çalışıyor, hangisi hata veriyor
 python -m tests.test_collector        # ağsız test (sahte beslemeler + sahte Claude)
+python -m web                         # data/events.json -> public/ (site, bkz. aşağısı)
+python -m collector dongu --site      # her turdan sonra siteyi de yeniden oluştur
 ```
 
 ## API anahtarı
@@ -52,3 +58,19 @@ olduğu için GitHub'a gönderilmez; `git status` çıktısında görünmemesi g
 | `DIPWATCH_GOMME_ESIGI` | `0.75` | düşürürsen daha çok, yükseltirsen daha az olay birleşir |
 
 Bozuk bir beslemeyi kapatmak için `sources.yaml` içinde `durum: kapali` yazmak yeterli.
+
+## Web sitesi (3. adım)
+
+`python -m web`, `data/events.json` dosyasından `public/` klasörüne statik bir site üretir. API anahtarı, sunucu
+veya ek paket gerekmez (yalnızca Python standart kütüphanesi). `public/index.html` dosyasını tarayıcıda açmak yeterli;
+istenirse klasör olduğu gibi GitHub Pages, Netlify vb. bir yere konabilir (linkler göreli).
+
+- **Ana sayfa**: son 72 saatin olayları, son haberin günüyle (İstanbul saati) gruplu. Önemli ve çok kaynaklı olaylar üstte.
+- **Bölge sayfaları** (`bolge/orta_dogu.html` …): aynı liste, tek bölge.
+- **Olay sayfası** (`olay/<id>.html`): Türkçe özet (yoksa kaynak başlığı), ülke/etiketler, haberlerin zamana göre
+  sıralı **zaman çizelgesi** ve yayın kuruluşuna göre gruplu **tüm kaynak linkleri**.
+- Listelerde arama kutusu ve "tek kaynaklı olayları da göster" seçeneği var. Varsayılan olarak yalnızca birden fazla
+  kaynağın haber yaptığı olaylar görünür (tek kaynaklı haberlerin çoğu gürültü). JavaScript kapalıysa hepsi görünür.
+
+Site her çalıştırmada `events.json`'dan baştan üretilir; süresi dolan olayların sayfaları silinir.
+`python -m web --girdi baska.json --cikti baska_klasor/` ile yollar değiştirilebilir. Test: `python -m tests.test_web`.
