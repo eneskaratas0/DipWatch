@@ -58,6 +58,11 @@ class Ayarlar:
     ozet_min_kaynak: int = int(os.environ.get("DIPWATCH_OZET_MIN_KAYNAK", "2"))
     ozet_max_olay_tur: int = 40        # bir turda en fazla kaç olay özetlensin
     llm_birlestirme: bool = True       # farklı dillerdeki aynı olayı Claude ile birleştir
+    # Çok dilli gömme modeliyle birleştirme (anahtarsız; fastembed gerekir)
+    gomme_birlestirme: bool = os.environ.get("DIPWATCH_GOMME", "1") != "0"
+    gomme_modeli: str = os.environ.get("DIPWATCH_GOMME_MODELI",
+                                       "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2")
+    gomme_esigi: float = float(os.environ.get("DIPWATCH_GOMME_ESIGI", "0.75"))
     # Çekme
     zaman_asimi: int = 20
     paralel: int = 16

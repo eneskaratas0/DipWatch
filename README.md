@@ -32,10 +32,14 @@ olduğu için GitHub'a gönderilmez; `git status` çıktısında görünmemesi g
    Linkler izleme parametrelerinden arındırılır, aynı link ikinci kez eklenmez.
 2. **Gruplama**: başlık + açıklama TF-IDF vektörüne çevrilir; son 36 saatte güncellenen bir olayla
    benzerlik 0.28'i geçerse o olaya eklenir, geçmezse yeni olay açılır (`config.py` içinden ayarlanır).
-3. **Diller arası birleştirme**: TF-IDF Türkçe ve İngilizce haberi eşleştiremez. Her turda yeni açılan
-   olaylar tek bir Claude çağrısıyla mevcut olaylara karşı kontrol edilir ve aynıysa birleştirilir.
-4. **Türkçe özet**: en az 2 farklı kaynağı olan ve yeni haber almış olaylar özetlenir (tur başına en fazla 40).
+3. **Diller arası birleştirme (anahtarsız)**: TF-IDF Türkçe ve İngilizce haberi eşleştiremez. Her başlık çok dilli
+   bir gömme modeliyle (`paraphrase-multilingual-MiniLM-L12-v2`, fastembed ile bilgisayarda çalışır) anlam
+   vektörüne çevrilir; yeni açılan bir olay, benzerliği 0.75'i geçen aktif olaya katılır. Model ilk turda indirilir
+   (~220 MB). İlk tur tüm başlıkları işlediği için ~5 dakika, sonraki turlar ~35 saniye sürer.
+   Claude anahtarı varsa, kalan olaylar ayrıca tek bir Claude çağrısıyla kontrol edilir.
+4. **Türkçe özet** (Claude anahtarı gerekir): en az 2 farklı kaynağı olan ve yeni haber almış olaylar özetlenir (tur başına en fazla 40).
    Özet; başlık, 2-4 cümle, bölge, ülkeler, etiketler ve 1-5 önem puanı içerir. Kaynaklar çelişiyorsa özette belirtilir.
+   Anahtar yoksa olay başlığı olarak varsa Türkçe bir kaynağın başlığı, yoksa ilk haberin başlığı kullanılır.
 
 ## Ayarlar (ortam değişkenleri)
 
@@ -44,5 +48,7 @@ olduğu için GitHub'a gönderilmez; `git status` çıktısında görünmemesi g
 | `DIPWATCH_MODEL` | `claude-opus-5-5` | özet modeli |
 | `DIPWATCH_EFOR` | `low` | düşünme eforu (low/medium/high) |
 | `DIPWATCH_OZET_MIN_KAYNAK` | `2` | kaç kaynaklı olaylar özetlensin |
+| `DIPWATCH_GOMME` | `1` | `0` yapılırsa gömme ile birleştirme kapanır |
+| `DIPWATCH_GOMME_ESIGI` | `0.75` | düşürürsen daha çok, yükseltirsen daha az olay birleşir |
 
 Bozuk bir beslemeyi kapatmak için `sources.yaml` içinde `durum: kapali` yazmak yeterli.

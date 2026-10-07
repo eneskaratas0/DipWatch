@@ -10,7 +10,8 @@ CREATE TABLE IF NOT EXISTS haber (
     baslik TEXT, ozet TEXT,
     yayin TEXT,              -- ISO UTC
     eklenme TEXT,
-    olay_id INTEGER REFERENCES olay(id)
+    olay_id INTEGER REFERENCES olay(id),
+    vektor BLOB               -- başlığın çok dilli gömme vektörü (float32), bkz. embed.py
 );
 CREATE INDEX IF NOT EXISTS haber_olay ON haber(olay_id);
 CREATE INDEX IF NOT EXISTS haber_yayin ON haber(yayin);
@@ -41,4 +42,8 @@ def baglan(yol: Path) -> sqlite3.Connection:
     con = sqlite3.connect(yol)
     con.row_factory = sqlite3.Row
     con.executescript(SEMA)
+    # eski veritabanlarına sonradan eklenen sütunlar
+    sutunlar = {r[1] for r in con.execute("PRAGMA table_info(haber)")}
+    if "vektor" not in sutunlar:
+        con.execute("ALTER TABLE haber ADD COLUMN vektor BLOB")
     return con
