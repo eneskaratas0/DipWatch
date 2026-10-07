@@ -73,9 +73,21 @@ def guvenli_link(url):
     return url if urlparse(url or "").scheme in ("http", "https") else "#"
 
 
-def sayfa(baslik, govde, kok="", aciklama="DipWatch: uluslararası siyaset olay takibi"):
+FONTLAR = ("https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,500;6..72,600"
+          "&family=Public+Sans:wght@400;500;600&display=swap")
+
+
+def sayfa(baslik, govde, kok="", aciklama="DipWatch: uluslararası siyaset olay takibi", secili=None):
+    """secili: menüde işaretlenecek bölge anahtarı ('' = Tümü, None = hiçbiri)."""
     e = escape
-    menu = "".join(f'<a href="{kok}bolge/{b}.html">{e(ad)}</a>' for b, ad in BOLGE_ADLARI.items())
+
+    def menu_linki(href, ad, anahtar):
+        isaret = ' aria-current="page"' if anahtar == secili else ""
+        sinif = f' class="b-{anahtar}"' if anahtar else ""
+        return f'<a href="{href}"{sinif}{isaret}>{e(ad)}</a>'
+
+    menu = menu_linki(f"{kok}index.html", "Tümü", "") + "".join(
+        menu_linki(f"{kok}bolge/{b}.html", ad, b) for b, ad in BOLGE_ADLARI.items())
     return f"""<!doctype html>
 <html lang="tr">
 <head>
@@ -83,43 +95,53 @@ def sayfa(baslik, govde, kok="", aciklama="DipWatch: uluslararası siyaset olay 
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{e(baslik)}</title>
 <meta name="description" content="{e(aciklama)}">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="{FONTLAR}">
 <link rel="stylesheet" href="{kok}stil.css">
 </head>
 <body>
-<header class="ust">
-  <a class="logo" href="{kok}index.html">DipWatch</a>
-  <nav class="bolgeler"><a href="{kok}index.html">Tümü</a>{menu}</nav>
+<a class="atla" href="#icerik">İçeriğe geç</a>
+<header class="masa">
+  <div class="masa-ic">
+    <a class="logo" href="{kok}index.html">DipWatch</a>
+    <span class="masa-alt">Uluslararası olay masası</span>
+  </div>
+  <nav class="bolgeler" aria-label="Bölgeler">{menu}</nav>
 </header>
-<main>
+<main id="icerik">
 {govde}
 </main>
-<footer>Başlıklar ve linkler kaynakların kendisine aittir. DipWatch haberleri otomatik toplar ve gruplar;
-özetler hata içerebilir, her zaman kaynağa bakın.</footer>
+<footer>Başlıklar ve linkler kaynakların kendisine aittir. DipWatch haberleri otomatik toplar ve gruplar.
+Özetler hata içerebilir; bir bilgiyi kullanmadan önce kaynağına bakın.</footer>
 <script src="{kok}filtre.js"></script>
 </body>
 </html>
 """
 
 
-def olay_karti(o, kok):
+def olay_satiri(o, kok):
     e = escape
     son = zaman(o["son_haber"])
-    rozetler = [f'<a class="rozet bolge" href="{kok}bolge/{e(o["bolge"])}.html">{e(bolge_adi(o["bolge"]))}</a>',
-                f'<span class="rozet">{o["kaynak_sayisi"]} kaynak</span>']
-    if o.get("onem"):
-        rozetler.append(f'<span class="rozet onem" title="önem {o["onem"]}/5">{"★" * o["onem"]}</span>')
+    b = e(o["bolge"])
+    onem = f'<span class="onem">önem {o["onem"]}/5</span>' if o.get("onem") else ""
     ozet = f'<p class="ozet">{e(o["ozet"])}</p>' if o.get("ozet") else ""
-    sinif = "olay tek" if o["kaynak_sayisi"] < 2 else "olay"
+    sinif = f"olay b-{b}" + (" tek" if o["kaynak_sayisi"] < 2 else "")
     return (f'<li class="{sinif}" data-ara="{e(arama_metni(o))}">'
-            f'<a class="baslik" href="{kok}olay/{o["id"]}.html">{e(o["baslik"])}</a>'
-            f'<div class="meta"><time>{saat_dk(son)}</time>{"".join(rozetler)}</div>{ozet}</li>')
+            f'<div class="olay-govde">'
+            f'<a class="baslik" href="{kok}olay/{o["id"]}.html">{e(o["baslik"])}</a>{ozet}'
+            f'<div class="meta"><a class="bolge-adi" href="{kok}bolge/{b}.html">{e(bolge_adi(o["bolge"]))}</a>'
+            f'<time datetime="{e(o["son_haber"])}">son haber {saat_dk(son)}</time>{onem}</div>'
+            f'</div>'
+            f'<div class="yayilim" title="{o["kaynak_sayisi"]} farklı yayın kuruluşu">'
+            f'<span class="sayi">{o["kaynak_sayisi"]}</span><span class="birim">kaynak</span></div></li>')
 
 
 def arama_metni(o):
     parcalar = [o["baslik"], o.get("ozet") or "", " ".join(o.get("ulkeler") or []),
                 " ".join(o.get("etiketler") or [])] + [k["baslik"] for k in o["kaynaklar"]]
     # filtre.js ile aynı sadeleştirme: büyük/küçük harf ve ı/i farkı aramayı bozmasın
-    return " ".join(parcalar).lower().replace("\u0307", "").replace("ı", "i")
+    return " ".join(parcalar).lower().replace("̇", "").replace("ı", "i")
 
 
 def gunlere_bol(olaylar):
@@ -137,44 +159,68 @@ def gunlere_bol(olaylar):
     return sirali
 
 
-def liste_sayfasi(baslik, alt, olaylar, kok, olusturulma):
+def bolge_seridi(olaylar, kok):
+    """Ana sayfanın imza öğesi: birden fazla kaynaklı olayların bölgelere dağılımı, tıklanabilir şerit."""
+    sayac = defaultdict(int)
+    for o in olaylar:
+        if o["kaynak_sayisi"] >= 2:
+            sayac[o["bolge"]] += 1
+    toplam = sum(sayac.values())
+    if not toplam:
+        return ""
+    sirali = sorted(sayac.items(), key=lambda x: -x[1])
+    parcalar = "".join(
+        f'<a class="serit-parca b-{escape(b)}" href="{kok}bolge/{escape(b)}.html" style="flex-grow:{n}"'
+        f' title="{escape(bolge_adi(b))}: {n} olay" aria-label="{escape(bolge_adi(b))}: {n} olay"><span class="serit-ad">{escape(bolge_adi(b))}</span>'
+        f'<span class="serit-sayi">{n}</span></a>'
+        for b, n in sirali)
+    return (f'<section class="serit" aria-labelledby="serit-baslik">'
+            f'<h2 id="serit-baslik">Son 72 saatte birden fazla kaynağın haber yaptığı {toplam} olay</h2>'
+            f'<div class="serit-cubuk">{parcalar}</div></section>')
+
+
+def liste_sayfasi(baslik, olaylar, kok, olusturulma, secili, serit=False):
     e = escape
     gunler = gunlere_bol(olaylar)
-    cok = sum(1 for o in olaylar if o["kaynak_sayisi"] >= 2)
     atla = "".join(f'<a href="#g{g.isoformat()}">{g.day} {AYLAR[g.month - 1]}</a>' for g, _ in gunler)
     bolumler = []
     for g, liste in gunler:
-        kartlar = "".join(olay_karti(o, kok) for o in liste)
+        satirlar = "".join(olay_satiri(o, kok) for o in liste)
         bolumler.append(f'<section class="gun" id="g{g.isoformat()}"><h2>{gun_adi(g)}</h2>'
-                        f'<ul class="olaylar">{kartlar}</ul></section>')
-    bos = '<p class="bos">Bu listede henüz olay yok.</p>' if not olaylar else ""
-    govde = f"""<div class="sayfa-bas">
+                        f'<ol class="olaylar">{satirlar}</ol></section>')
+    bos = ('<p class="bos">Bu bölgede son 72 saatte olay yok. Diğer bölgelere üstteki menüden bakabilirsin.</p>'
+           if not olaylar else "")
+    bolge_sinifi = f" b-{e(secili)}" if secili else ""
+    govde = f"""<div class="sayfa-bas{bolge_sinifi}">
   <h1>{e(baslik)}</h1>
-  <p class="alt">{e(alt)} · {len(olaylar)} olay, {cok} tanesi birden fazla kaynakta ·
-  güncelleme: {tarih_saat(zaman(olusturulma))}</p>
-  <div class="araclar">
-    <input type="search" id="ara" placeholder="Başlık, ülke veya kaynakta ara" aria-label="Ara">
-    <label><input type="checkbox" id="tek"> Tek kaynaklı olayları da göster</label>
-  </div>
-  <nav class="gunler">{atla}</nav>
+  <p class="alt">{len(olaylar)} olay, son güncelleme {tarih_saat(zaman(olusturulma))} (İstanbul saati)</p>
+</div>
+{bolge_seridi(olaylar, kok) if serit else ""}
+<div class="araclar">
+  <label class="ara-kutu"><span class="gizli">Ara</span>
+    <input type="search" id="ara" placeholder="Başlık, ülke veya kaynakta ara"></label>
+  <label class="secim"><input type="checkbox" id="tek"> Tek kaynaklı olayları da göster</label>
+  <nav class="gunler" aria-label="Günler">{atla}</nav>
 </div>
 {bos}{"".join(bolumler)}
-<p class="bos" id="sonuc-yok" hidden>Filtreye uyan olay yok.</p>"""
-    return sayfa(f"{baslik} · DipWatch", govde, kok)
+<p class="bos" id="sonuc-yok" hidden>Aramana uyan olay yok. Başka bir kelime dene ya da tek kaynaklı olayları da göster.</p>"""
+    return sayfa(f"{baslik} | DipWatch", govde, kok, secili=secili)
 
 
 def olay_sayfasi(o, kok="../"):
     e = escape
+    b = e(o["bolge"])
     ilk, son = zaman(o["ilk_haber"]), zaman(o["son_haber"])
     kaynaklar = sorted(o["kaynaklar"], key=lambda k: k.get("yayin") or "")
 
     if o.get("ozet"):
         ozet = f'<p class="ozet buyuk">{e(o["ozet"])}</p>'
     else:
-        ozet = ('<p class="not">Bu olay için henüz Türkçe özet yok; başlık kaynaklardan birinden alındı. '
-                'Ayrıntı için aşağıdaki kaynaklara bakın.</p>')
+        ozet = ('<p class="not">Bu olay için henüz Türkçe özet yok. Başlık kaynaklardan birinden alındı; '
+                'ayrıntı için aşağıdaki haberlere bak.</p>')
 
-    etiketler = "".join(f'<span class="rozet">{e(x)}</span>' for x in (o.get("ulkeler") or []) + (o.get("etiketler") or []))
+    etiketler = "".join(f'<li>{e(x)}</li>' for x in (o.get("ulkeler") or []) + (o.get("etiketler") or []))
+    etiketler = f'<ul class="etiketler" aria-label="Ülkeler ve etiketler">{etiketler}</ul>' if etiketler else ""
 
     cizelge, onceki_gun = [], None
     for k in kaynaklar:
@@ -185,7 +231,7 @@ def olay_sayfasi(o, kok="../"):
         dil = DILLER.get(k.get("dil"), (k.get("dil") or "").upper())
         cizelge.append(
             f'<li><time>{saat_dk(d)}</time><div><span class="kaynak">{e(k["kaynak"])}</span>'
-            f'<span class="dil">{e(dil)}</span><br>'
+            f'<span class="dil" title="Haberin dili">{e(dil)}</span>'
             f'<a href="{e(guvenli_link(k["link"]))}" rel="noopener noreferrer" target="_blank">{e(k["baslik"])}</a>'
             f'</div></li>')
 
@@ -193,26 +239,31 @@ def olay_sayfasi(o, kok="../"):
     for k in kaynaklar:
         yayinlar[k["kaynak"]].append(k)
     kaynak_listesi = "".join(
-        f'<li><strong>{e(ad)}</strong> ({len(liste)})<ul>'
+        f'<li><h3>{e(ad)}</h3><ul>'
         + "".join(f'<li><a href="{e(guvenli_link(k["link"]))}" rel="noopener noreferrer" target="_blank">'
                   f'{e(k["baslik"])}</a></li>' for k in liste)
         + "</ul></li>"
         for ad, liste in sorted(yayinlar.items(), key=lambda x: x[0].lower()))
 
-    onem = f' · önem {"★" * o["onem"]}' if o.get("onem") else ""
-    govde = f"""<article class="olay-sayfa">
-  <p class="ust-bilgi"><a href="{kok}bolge/{e(o["bolge"])}.html">{e(bolge_adi(o["bolge"]))}</a> ·
-  {o["kaynak_sayisi"]} kaynak, {len(kaynaklar)} haber{onem}</p>
+    onem = f'<div><dt>Önem</dt><dd>{o["onem"]}/5</dd></div>' if o.get("onem") else ""
+    govde = f"""<article class="olay-sayfa b-{b}">
+  <a class="bolge-adi" href="{kok}bolge/{b}.html">{e(bolge_adi(o["bolge"]))}</a>
   <h1>{e(o["baslik"])}</h1>
-  <p class="alt">İlk haber: {tarih_saat(ilk)} · Son haber: {tarih_saat(son)} (İstanbul saati)</p>
+  <dl class="olgular">
+    <div><dt>Kaynak</dt><dd>{o["kaynak_sayisi"]}</dd></div>
+    <div><dt>Haber</dt><dd>{len(kaynaklar)}</dd></div>
+    <div><dt>İlk haber</dt><dd>{tarih_saat(ilk)}</dd></div>
+    <div><dt>Son haber</dt><dd>{tarih_saat(son)}</dd></div>{onem}
+  </dl>
   {ozet}
-  <div class="etiketler">{etiketler}</div>
+  {etiketler}
   <h2>Zaman çizelgesi</h2>
+  <p class="aciklama">Haberler yayın saatine göre sıralı (İstanbul saati). Başlığa tıklayınca haber kaynağında açılır.</p>
   <ol class="cizelge">{"".join(cizelge)}</ol>
-  <h2>Tüm kaynaklar</h2>
+  <h2>Yayın kuruluşlarına göre kaynaklar</h2>
   <ul class="kaynaklar">{kaynak_listesi}</ul>
 </article>"""
-    return sayfa(f"{o['baslik']} · DipWatch", govde, kok, aciklama=(o.get("ozet") or o["baslik"])[:200])
+    return sayfa(f"{o['baslik']} | DipWatch", govde, kok, aciklama=(o.get("ozet") or o["baslik"])[:200])
 
 
 def olustur(girdi: Path, cikti: Path) -> int:
@@ -229,13 +280,13 @@ def olustur(girdi: Path, cikti: Path) -> int:
         shutil.copy(dosya, cikti / dosya.name)
 
     (cikti / "index.html").write_text(
-        liste_sayfasi("Son olaylar", "Tüm bölgeler", olaylar, "", olusturulma), encoding="utf-8")
+        liste_sayfasi("Son olaylar", olaylar, "", olusturulma, secili="", serit=True), encoding="utf-8")
     bolgeye_gore = defaultdict(list)
     for o in olaylar:
         bolgeye_gore[o["bolge"]].append(o)
     for b in set(BOLGE_ADLARI) | set(bolgeye_gore):
         (cikti / "bolge" / f"{b}.html").write_text(
-            liste_sayfasi(bolge_adi(b), "Bölge", bolgeye_gore.get(b, []), "../", olusturulma), encoding="utf-8")
+            liste_sayfasi(bolge_adi(b), bolgeye_gore.get(b, []), "../", olusturulma, secili=b), encoding="utf-8")
     for o in olaylar:
         (cikti / "olay" / f"{o['id']}.html").write_text(olay_sayfasi(o), encoding="utf-8")
 
