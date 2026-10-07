@@ -4,96 +4,101 @@
 #   tur:    yerel | uluslararasi | turkce | analiz | resmi
 #   yontem: rss          -> sitenin kendi RSS akışı
 #           google_news  -> sitenin kendi RSS'i yok veya kapalı; Google News RSS üzerinden "site:" sorgusuyla çekilir
-#   durum:  dogrulanmadi -> bu ortamın ağı haber sitelerine erişemediği için henüz test edilmedi.
-#                           Toplayıcı (2. adım) ilk çalıştığında her akışı test edip bu alanı güncelleyecek.
+#   durum:  calisiyor    -> 2026-10-07 gerçek ağdan test edildi, haber döndürüyor
+#           kapali       -> toplayıcı bu kaynağı atlar
+#   gn_sure: (isteğe bağlı) Google News zaman penceresi, varsayılan 1d. Seyrek yayın yapanlar için 7d.
 #
-# Google News şablonu:
+# Google News şablonu (dil: tr olanlar Türkiye baskısında aranır, bkz. collector/config.py):
 #   https://news.google.com/rss/search?q=site:{alan_adi}+when:1d&hl=en-US&gl=US&ceid=US:en
+#
+# 2026-10-07 testinde kendi RSS'i bot korumasıyla 403 veren (NPR, Times of Israel, Arab News, Daily Sabah),
+# bağlantıyı kesen (Tehran Times) veya boş dönen (Middle East Eye) siteler Google News'e alındı.
+# Tekrar test: python test_feeds.py sonuc.json
 
 bolgeler:
 
   kuresel:
-    - {ad: BBC World, tur: uluslararasi, dil: en, yontem: rss, url: "https://feeds.bbci.co.uk/news/world/rss.xml", durum: dogrulanmadi}
-    - {ad: Reuters, tur: uluslararasi, dil: en, yontem: google_news, alan_adi: reuters.com, durum: dogrulanmadi}
-    - {ad: Associated Press, tur: uluslararasi, dil: en, yontem: google_news, alan_adi: apnews.com, durum: dogrulanmadi}
-    - {ad: Al Jazeera English, tur: uluslararasi, dil: en, yontem: rss, url: "https://www.aljazeera.com/xml/rss/all.xml", durum: dogrulanmadi}
-    - {ad: The Guardian World, tur: uluslararasi, dil: en, yontem: rss, url: "https://www.theguardian.com/world/rss", durum: dogrulanmadi}
-    - {ad: France 24, tur: uluslararasi, dil: en, yontem: rss, url: "https://www.france24.com/en/rss", durum: dogrulanmadi}
-    - {ad: DW English, tur: uluslararasi, dil: en, yontem: rss, url: "https://rss.dw.com/rdf/rss-en-all", durum: dogrulanmadi}
-    - {ad: New York Times World, tur: uluslararasi, dil: en, yontem: rss, url: "https://rss.nytimes.com/services/xml/rss/nyt/World.xml", durum: dogrulanmadi}
-    - {ad: NPR World, tur: uluslararasi, dil: en, yontem: rss, url: "https://feeds.npr.org/1004/rss.xml", durum: dogrulanmadi}
+    - {ad: BBC World, tur: uluslararasi, dil: en, yontem: rss, url: "https://feeds.bbci.co.uk/news/world/rss.xml", durum: calisiyor}
+    - {ad: Reuters, tur: uluslararasi, dil: en, yontem: google_news, alan_adi: reuters.com, durum: calisiyor}
+    - {ad: Associated Press, tur: uluslararasi, dil: en, yontem: google_news, alan_adi: apnews.com, durum: calisiyor}
+    - {ad: Al Jazeera English, tur: uluslararasi, dil: en, yontem: rss, url: "https://www.aljazeera.com/xml/rss/all.xml", durum: calisiyor}
+    - {ad: The Guardian World, tur: uluslararasi, dil: en, yontem: rss, url: "https://www.theguardian.com/world/rss", durum: calisiyor}
+    - {ad: France 24, tur: uluslararasi, dil: en, yontem: rss, url: "https://www.france24.com/en/rss", durum: calisiyor}
+    - {ad: DW English, tur: uluslararasi, dil: en, yontem: rss, url: "https://rss.dw.com/rdf/rss-en-all", durum: calisiyor}
+    - {ad: New York Times World, tur: uluslararasi, dil: en, yontem: rss, url: "https://rss.nytimes.com/services/xml/rss/nyt/World.xml", durum: calisiyor}
+    - {ad: NPR World, tur: uluslararasi, dil: en, yontem: google_news, alan_adi: npr.org, durum: calisiyor}
 
   orta_dogu:
-    - {ad: BBC Middle East, tur: uluslararasi, dil: en, yontem: rss, url: "https://feeds.bbci.co.uk/news/world/middle_east/rss.xml", durum: dogrulanmadi}
-    - {ad: Al-Monitor, tur: yerel, dil: en, yontem: google_news, alan_adi: al-monitor.com, durum: dogrulanmadi}
-    - {ad: Middle East Eye, tur: yerel, dil: en, yontem: rss, url: "https://www.middleeasteye.net/rss", durum: dogrulanmadi}
-    - {ad: Times of Israel, ulke: İsrail, tur: yerel, dil: en, yontem: rss, url: "https://www.timesofisrael.com/feed/", durum: dogrulanmadi}
-    - {ad: Haaretz, ulke: İsrail, tur: yerel, dil: en, yontem: google_news, alan_adi: haaretz.com, durum: dogrulanmadi}
-    - {ad: Jerusalem Post, ulke: İsrail, tur: yerel, dil: en, yontem: rss, url: "https://www.jpost.com/rss/rssfeedsfrontpage.aspx", durum: dogrulanmadi}
-    - {ad: Arab News, ulke: Suudi Arabistan, tur: yerel, dil: en, yontem: rss, url: "https://www.arabnews.com/rss.xml", durum: dogrulanmadi}
-    - {ad: Asharq Al-Awsat English, ulke: Suudi Arabistan, tur: yerel, dil: en, yontem: google_news, alan_adi: english.aawsat.com, durum: dogrulanmadi}
-    - {ad: Al Arabiya English, ulke: BAE, tur: yerel, dil: en, yontem: google_news, alan_adi: english.alarabiya.net, durum: dogrulanmadi}
-    - {ad: The National, ulke: BAE, tur: yerel, dil: en, yontem: google_news, alan_adi: thenationalnews.com, durum: dogrulanmadi}
-    - {ad: Tehran Times, ulke: İran, tur: yerel, dil: en, yontem: rss, url: "https://www.tehrantimes.com/rss", durum: dogrulanmadi}
-    - {ad: Iran International, ulke: İran, tur: yerel, dil: en, yontem: google_news, alan_adi: iranintl.com, durum: dogrulanmadi}
-    - {ad: L'Orient Today, ulke: Lübnan, tur: yerel, dil: en, yontem: google_news, alan_adi: lorientlejour.com, durum: dogrulanmadi}
-    - {ad: Rudaw, ulke: Irak (Kürt Bölgesi), tur: yerel, dil: en, yontem: google_news, alan_adi: rudaw.net, durum: dogrulanmadi}
-    - {ad: Daily Sabah, ulke: Türkiye, tur: yerel, dil: en, yontem: rss, url: "https://www.dailysabah.com/rss/world", durum: dogrulanmadi}
+    - {ad: BBC Middle East, tur: uluslararasi, dil: en, yontem: rss, url: "https://feeds.bbci.co.uk/news/world/middle_east/rss.xml", durum: calisiyor}
+    - {ad: Al-Monitor, tur: yerel, dil: en, yontem: google_news, alan_adi: al-monitor.com, durum: calisiyor}
+    - {ad: Middle East Eye, tur: yerel, dil: en, yontem: google_news, alan_adi: middleeasteye.net, durum: calisiyor}
+    - {ad: Times of Israel, ulke: İsrail, tur: yerel, dil: en, yontem: google_news, alan_adi: timesofisrael.com, durum: calisiyor}
+    - {ad: Haaretz, ulke: İsrail, tur: yerel, dil: en, yontem: google_news, alan_adi: haaretz.com, durum: calisiyor}
+    - {ad: Jerusalem Post, ulke: İsrail, tur: yerel, dil: en, yontem: rss, url: "https://www.jpost.com/rss/rssfeedsfrontpage.aspx", durum: calisiyor}
+    - {ad: Arab News, ulke: Suudi Arabistan, tur: yerel, dil: en, yontem: google_news, alan_adi: arabnews.com, durum: calisiyor}
+    - {ad: Asharq Al-Awsat English, ulke: Suudi Arabistan, tur: yerel, dil: en, yontem: google_news, alan_adi: english.aawsat.com, durum: calisiyor}
+    - {ad: Al Arabiya English, ulke: BAE, tur: yerel, dil: en, yontem: google_news, alan_adi: english.alarabiya.net, durum: calisiyor}
+    - {ad: The National, ulke: BAE, tur: yerel, dil: en, yontem: google_news, alan_adi: thenationalnews.com, durum: calisiyor}
+    - {ad: Tehran Times, ulke: İran, tur: yerel, dil: en, yontem: google_news, alan_adi: tehrantimes.com, durum: calisiyor}
+    - {ad: Iran International, ulke: İran, tur: yerel, dil: en, yontem: google_news, alan_adi: iranintl.com, durum: calisiyor}
+    - {ad: L'Orient Today, ulke: Lübnan, tur: yerel, dil: en, yontem: google_news, alan_adi: lorientlejour.com, durum: calisiyor}
+    - {ad: Rudaw, ulke: Irak (Kürt Bölgesi), tur: yerel, dil: en, yontem: google_news, alan_adi: rudaw.net, durum: calisiyor}
+    - {ad: Daily Sabah, ulke: Türkiye, tur: yerel, dil: en, yontem: google_news, alan_adi: dailysabah.com, durum: calisiyor}
 
   rusya_ukrayna_kafkasya:
-    - {ad: Kyiv Independent, ulke: Ukrayna, tur: yerel, dil: en, yontem: rss, url: "https://kyivindependent.com/feed/", durum: dogrulanmadi}
-    - {ad: Ukrainska Pravda, ulke: Ukrayna, tur: yerel, dil: en, yontem: rss, url: "https://www.pravda.com.ua/eng/rss/", durum: dogrulanmadi}
-    - {ad: TASS, ulke: Rusya, tur: yerel, dil: en, yontem: rss, url: "https://tass.com/rss/v2.xml", durum: dogrulanmadi}
-    - {ad: Meduza, ulke: Rusya (sürgün basın), tur: yerel, dil: en, yontem: rss, url: "https://meduza.io/rss/en/all", durum: dogrulanmadi}
-    - {ad: The Moscow Times, ulke: Rusya, tur: yerel, dil: en, yontem: rss, url: "https://www.themoscowtimes.com/rss/news", durum: dogrulanmadi}
-    - {ad: RFE/RL, tur: uluslararasi, dil: en, yontem: google_news, alan_adi: rferl.org, durum: dogrulanmadi}
-    - {ad: OC Media, ulke: Güney Kafkasya, tur: yerel, dil: en, yontem: rss, url: "https://oc-media.org/feed/", durum: dogrulanmadi}
-    - {ad: Eurasianet, ulke: Orta Asya / Kafkasya, tur: yerel, dil: en, yontem: rss, url: "https://eurasianet.org/rss.xml", durum: dogrulanmadi}
+    - {ad: Kyiv Independent, ulke: Ukrayna, tur: yerel, dil: en, yontem: rss, url: "https://kyivindependent.com/news-archive/rss/", durum: calisiyor}
+    - {ad: Ukrainska Pravda, ulke: Ukrayna, tur: yerel, dil: en, yontem: rss, url: "https://www.pravda.com.ua/eng/rss/", durum: calisiyor}
+    - {ad: TASS, ulke: Rusya, tur: yerel, dil: en, yontem: rss, url: "https://tass.com/rss/v2.xml", durum: calisiyor}
+    - {ad: Meduza, ulke: Rusya (sürgün basın), tur: yerel, dil: en, yontem: rss, url: "https://meduza.io/rss/en/all", durum: calisiyor}
+    - {ad: The Moscow Times, ulke: Rusya, tur: yerel, dil: en, yontem: rss, url: "https://www.themoscowtimes.com/rss/news", durum: calisiyor}
+    - {ad: RFE/RL, tur: uluslararasi, dil: en, yontem: google_news, alan_adi: rferl.org, durum: calisiyor}
+    - {ad: OC Media, ulke: Güney Kafkasya, tur: yerel, dil: en, yontem: rss, url: "https://oc-media.org/feed/", durum: calisiyor}
+    - {ad: Eurasianet, ulke: Orta Asya / Kafkasya, tur: yerel, dil: en, yontem: rss, url: "https://eurasianet.org/rss", durum: calisiyor}
 
   avrupa:
-    - {ad: Politico Europe, tur: yerel, dil: en, yontem: rss, url: "https://www.politico.eu/feed/", durum: dogrulanmadi}
-    - {ad: Euronews, tur: yerel, dil: en, yontem: rss, url: "https://www.euronews.com/rss", durum: dogrulanmadi}
-    - {ad: EUobserver, tur: yerel, dil: en, yontem: rss, url: "https://euobserver.com/rss.xml", durum: dogrulanmadi}
-    - {ad: Balkan Insight, ulke: Balkanlar, tur: yerel, dil: en, yontem: rss, url: "https://balkaninsight.com/feed/", durum: dogrulanmadi}
-    - {ad: BBC Europe, tur: uluslararasi, dil: en, yontem: rss, url: "https://feeds.bbci.co.uk/news/world/europe/rss.xml", durum: dogrulanmadi}
+    - {ad: Politico Europe, tur: yerel, dil: en, yontem: rss, url: "https://www.politico.eu/feed/", durum: calisiyor}
+    - {ad: Euronews, tur: yerel, dil: en, yontem: rss, url: "https://www.euronews.com/rss", durum: calisiyor}
+    - {ad: EUobserver, tur: yerel, dil: en, yontem: rss, url: "https://euobserver.com/rss", durum: calisiyor}
+    - {ad: Balkan Insight, ulke: Balkanlar, tur: yerel, dil: en, yontem: rss, url: "https://balkaninsight.com/feed/", durum: calisiyor}
+    - {ad: BBC Europe, tur: uluslararasi, dil: en, yontem: rss, url: "https://feeds.bbci.co.uk/news/world/europe/rss.xml", durum: calisiyor}
 
   asya_pasifik:
-    - {ad: South China Morning Post, ulke: Hong Kong / Çin, tur: yerel, dil: en, yontem: rss, url: "https://www.scmp.com/rss/91/feed", durum: dogrulanmadi}
-    - {ad: Global Times, ulke: Çin (devlet), tur: yerel, dil: en, yontem: google_news, alan_adi: globaltimes.cn, durum: dogrulanmadi}
-    - {ad: Nikkei Asia, ulke: Japonya, tur: yerel, dil: en, yontem: google_news, alan_adi: asia.nikkei.com, durum: dogrulanmadi}
-    - {ad: The Japan Times, ulke: Japonya, tur: yerel, dil: en, yontem: rss, url: "https://www.japantimes.co.jp/feed/", durum: dogrulanmadi}
-    - {ad: Yonhap, ulke: Güney Kore, tur: yerel, dil: en, yontem: rss, url: "https://en.yna.co.kr/RSS/news.xml", durum: dogrulanmadi}
-    - {ad: The Diplomat, tur: analiz, dil: en, yontem: rss, url: "https://thediplomat.com/feed/", durum: dogrulanmadi}
-    - {ad: The Hindu International, ulke: Hindistan, tur: yerel, dil: en, yontem: rss, url: "https://www.thehindu.com/news/international/feeder/default.rss", durum: dogrulanmadi}
-    - {ad: Dawn, ulke: Pakistan, tur: yerel, dil: en, yontem: rss, url: "https://www.dawn.com/feeds/home", durum: dogrulanmadi}
-    - {ad: BBC Asia, tur: uluslararasi, dil: en, yontem: rss, url: "https://feeds.bbci.co.uk/news/world/asia/rss.xml", durum: dogrulanmadi}
+    - {ad: South China Morning Post, ulke: Hong Kong / Çin, tur: yerel, dil: en, yontem: rss, url: "https://www.scmp.com/rss/91/feed", durum: calisiyor}
+    - {ad: Global Times, ulke: Çin (devlet), tur: yerel, dil: en, yontem: google_news, alan_adi: globaltimes.cn, durum: calisiyor}
+    - {ad: Nikkei Asia, ulke: Japonya, tur: yerel, dil: en, yontem: google_news, alan_adi: asia.nikkei.com, durum: calisiyor}
+    - {ad: The Japan Times, ulke: Japonya, tur: yerel, dil: en, yontem: rss, url: "https://www.japantimes.co.jp/feed/", durum: calisiyor}
+    - {ad: Yonhap, ulke: Güney Kore, tur: yerel, dil: en, yontem: rss, url: "https://en.yna.co.kr/RSS/news.xml", durum: calisiyor}
+    - {ad: The Diplomat, tur: analiz, dil: en, yontem: rss, url: "https://thediplomat.com/feed/", durum: calisiyor}
+    - {ad: The Hindu International, ulke: Hindistan, tur: yerel, dil: en, yontem: rss, url: "https://www.thehindu.com/news/international/feeder/default.rss", durum: calisiyor}
+    - {ad: Dawn, ulke: Pakistan, tur: yerel, dil: en, yontem: rss, url: "https://www.dawn.com/feeds/home", durum: calisiyor}
+    - {ad: BBC Asia, tur: uluslararasi, dil: en, yontem: rss, url: "https://feeds.bbci.co.uk/news/world/asia/rss.xml", durum: calisiyor}
 
   afrika:
-    - {ad: BBC Africa, tur: uluslararasi, dil: en, yontem: rss, url: "https://feeds.bbci.co.uk/news/world/africa/rss.xml", durum: dogrulanmadi}
-    - {ad: AllAfrica, tur: yerel, dil: en, yontem: rss, url: "https://allafrica.com/tools/headlines/rdf/latest/headlines.rdf", durum: dogrulanmadi}
-    - {ad: Africanews, tur: yerel, dil: en, yontem: rss, url: "https://www.africanews.com/feed/rss", durum: dogrulanmadi}
-    - {ad: Premium Times, ulke: Nijerya, tur: yerel, dil: en, yontem: rss, url: "https://www.premiumtimesng.com/feed", durum: dogrulanmadi}
-    - {ad: The East African, ulke: Doğu Afrika, tur: yerel, dil: en, yontem: google_news, alan_adi: theeastafrican.co.ke, durum: dogrulanmadi}
+    - {ad: BBC Africa, tur: uluslararasi, dil: en, yontem: rss, url: "https://feeds.bbci.co.uk/news/world/africa/rss.xml", durum: calisiyor}
+    - {ad: AllAfrica, tur: yerel, dil: en, yontem: rss, url: "https://allafrica.com/tools/headlines/rdf/latest/headlines.rdf", durum: calisiyor}
+    - {ad: Africanews, tur: yerel, dil: en, yontem: rss, url: "https://www.africanews.com/feed/rss", durum: calisiyor}
+    - {ad: Premium Times, ulke: Nijerya, tur: yerel, dil: en, yontem: rss, url: "https://www.premiumtimesng.com/feed", durum: calisiyor}
+    - {ad: The East African, ulke: Doğu Afrika, tur: yerel, dil: en, yontem: google_news, alan_adi: theeastafrican.co.ke, durum: calisiyor}
 
   amerika:
-    - {ad: BBC US & Canada, tur: uluslararasi, dil: en, yontem: rss, url: "https://feeds.bbci.co.uk/news/world/us_and_canada/rss.xml", durum: dogrulanmadi}
-    - {ad: BBC Latin America, tur: uluslararasi, dil: en, yontem: rss, url: "https://feeds.bbci.co.uk/news/world/latin_america/rss.xml", durum: dogrulanmadi}
-    - {ad: MercoPress, ulke: Güney Amerika, tur: yerel, dil: en, yontem: rss, url: "https://en.mercopress.com/rss", durum: dogrulanmadi}
+    - {ad: BBC US & Canada, tur: uluslararasi, dil: en, yontem: rss, url: "https://feeds.bbci.co.uk/news/world/us_and_canada/rss.xml", durum: calisiyor}
+    - {ad: BBC Latin America, tur: uluslararasi, dil: en, yontem: rss, url: "https://feeds.bbci.co.uk/news/world/latin_america/rss.xml", durum: calisiyor}
+    - {ad: MercoPress, ulke: Güney Amerika, tur: yerel, dil: en, yontem: rss, url: "https://en.mercopress.com/rss", durum: calisiyor}
 
   turkce:
-    - {ad: Anadolu Ajansı Dünya, tur: turkce, dil: tr, yontem: rss, url: "https://www.aa.com.tr/tr/rss/default?cat=dunya", durum: dogrulanmadi}
-    - {ad: TRT Haber Dünya, tur: turkce, dil: tr, yontem: rss, url: "https://www.trthaber.com/dunya_articles.rss", durum: dogrulanmadi}
-    - {ad: BBC Türkçe, tur: turkce, dil: tr, yontem: rss, url: "https://feeds.bbci.co.uk/turkce/rss.xml", durum: dogrulanmadi}
-    - {ad: DW Türkçe, tur: turkce, dil: tr, yontem: rss, url: "https://rss.dw.com/xml/rss-tur-all", durum: dogrulanmadi}
-    - {ad: Euronews Türkçe, tur: turkce, dil: tr, yontem: rss, url: "https://tr.euronews.com/rss", durum: dogrulanmadi}
-    - {ad: Independent Türkçe, tur: turkce, dil: tr, yontem: google_news, alan_adi: indyturk.com, durum: dogrulanmadi}
-    - {ad: Medyascope, tur: turkce, dil: tr, yontem: rss, url: "https://medyascope.tv/feed/", durum: dogrulanmadi}
+    - {ad: Anadolu Ajansı Dünya, tur: turkce, dil: tr, yontem: rss, url: "https://www.aa.com.tr/tr/rss/default?cat=dunya", durum: calisiyor}
+    - {ad: TRT Haber Dünya, tur: turkce, dil: tr, yontem: rss, url: "https://www.trthaber.com/dunya_articles.rss", durum: calisiyor}
+    - {ad: BBC Türkçe, tur: turkce, dil: tr, yontem: rss, url: "https://feeds.bbci.co.uk/turkce/rss.xml", durum: calisiyor}
+    - {ad: DW Türkçe, tur: turkce, dil: tr, yontem: rss, url: "https://rss.dw.com/xml/rss-tur-all", durum: calisiyor}
+    - {ad: Euronews Türkçe, tur: turkce, dil: tr, yontem: rss, url: "https://tr.euronews.com/rss", durum: calisiyor}
+    - {ad: Independent Türkçe, tur: turkce, dil: tr, yontem: google_news, alan_adi: indyturk.com, durum: calisiyor}
+    - {ad: Medyascope, tur: turkce, dil: tr, yontem: rss, url: "https://medyascope.tv/feed/", durum: calisiyor}
 
   analiz_ve_resmi:
-    - {ad: International Crisis Group, tur: analiz, dil: en, yontem: rss, url: "https://www.crisisgroup.org/rss", durum: dogrulanmadi}
-    - {ad: Foreign Policy, tur: analiz, dil: en, yontem: rss, url: "https://foreignpolicy.com/feed/", durum: dogrulanmadi}
-    - {ad: Council on Foreign Relations, tur: analiz, dil: en, yontem: google_news, alan_adi: cfr.org, durum: dogrulanmadi}
-    - {ad: Carnegie Endowment, tur: analiz, dil: en, yontem: google_news, alan_adi: carnegieendowment.org, durum: dogrulanmadi}
-    - {ad: SETA, tur: analiz, dil: tr, yontem: google_news, alan_adi: setav.org, durum: dogrulanmadi}
-    - {ad: ORSAM, tur: analiz, dil: tr, yontem: google_news, alan_adi: orsam.org.tr, durum: dogrulanmadi}
-    - {ad: UN News, tur: resmi, dil: en, yontem: rss, url: "https://news.un.org/feed/subscribe/en/news/all/rss.xml", durum: dogrulanmadi}
+    - {ad: International Crisis Group, tur: analiz, dil: en, yontem: rss, url: "https://www.crisisgroup.org/rss", durum: calisiyor}
+    - {ad: Foreign Policy, tur: analiz, dil: en, yontem: rss, url: "https://foreignpolicy.com/feed/", durum: calisiyor}
+    - {ad: Council on Foreign Relations, tur: analiz, dil: en, yontem: google_news, alan_adi: cfr.org, durum: calisiyor}
+    - {ad: Carnegie Endowment, tur: analiz, dil: en, yontem: google_news, alan_adi: carnegieendowment.org, durum: calisiyor}
+    - {ad: SETA, tur: analiz, dil: tr, yontem: google_news, alan_adi: setav.org, gn_sure: 7d, durum: calisiyor}
+    - {ad: ORSAM, tur: analiz, dil: tr, yontem: google_news, alan_adi: orsam.org.tr, gn_sure: 7d, durum: calisiyor}
+    - {ad: UN News, tur: resmi, dil: en, yontem: rss, url: "https://news.un.org/feed/subscribe/en/news/all/rss.xml", durum: calisiyor}

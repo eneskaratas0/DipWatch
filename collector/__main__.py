@@ -4,6 +4,7 @@ Kullanım:
   python -m collector tur                 # bir kez çek, grupla, özetle, dışa aktar
   python -m collector dongu --aralik 300  # her 5 dakikada bir tur
   python -m collector feed-durum          # hangi beslemeler çalışıyor / bozuk
+  --site eklenirse her turdan sonra public/ klasöründeki site de yeniden oluşturulur.
 """
 import argparse
 import logging
@@ -12,9 +13,21 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from . import cluster, db, export, fetch, summarize
-from .config import Ayarlar, kaynaklari_yukle
+from .config import KOK, Ayarlar, kaynaklari_yukle
 
 log = logging.getLogger("dipwatch")
+_GOMUCU = []  # dongu modunda model her turda yeniden yüklenmesin
+
+
+def _gomucu(ayar):
+    if not _GOMUCU:
+        try:
+            from . import embed
+            _GOMUCU.append(embed.gomucu(ayar))
+        except ImportError:  # numpy yok
+            log.info("numpy/fastembed kurulu değil: gömme ile birleştirme atlandı")
+            _GOMUCU.append(None)
+    return _GOMUCU[0]
 
 
 def feed_durumu_yaz(con, k, n, hata):
@@ -30,7 +43,21 @@ def feed_durumu_yaz(con, k, n, hata):
                     (k.ad, k.url, simdi, simdi, n))
 
 
-def tur(ayar: Ayarlar, client=None):
+def gomme_ile_birlestir(con, ayar, gom, acilan) -> int:
+    from . import embed
+    embed.eksikleri_vektorle(con, gom)
+    birlesen = 0
+    for yeni_id, mevcut_id in embed.birlestirme_onerileri(con, ayar, acilan):
+        hedef = cluster.kok_olay(con, mevcut_id)
+        if hedef != cluster.kok_olay(con, yeni_id):
+            cluster.birlestir(con, hedef, yeni_id)
+            birlesen += 1
+    con.commit()
+    return birlesen
+
+
+def tur(ayar: Ayarlar, client=None, gom=None):
+    """client / gom: None ise ayarlardan oluşturulur, False ise ilgili adım atlanır."""
     con = db.baglan(ayar.veritabani)
     kaynaklar = kaynaklari_yukle(ayar.kaynak_dosyasi)
     sonuclar = fetch.hepsini_cek(kaynaklar, ayar.paralel, ayar.zaman_asimi)
@@ -64,7 +91,12 @@ def tur(ayar: Ayarlar, client=None):
     cluster.olay_sayaclarini_guncelle(con, degisen)
     con.commit()
 
-    # 3) Claude: diller arası birleştirme + Türkçe özet
+    # 3) Gömme modeli: diller arası birleştirme (anahtarsız)
+    if gom is None:
+        gom = _gomucu(ayar)
+    gomme_birlesen = gomme_ile_birlestir(con, ayar, gom, acilan) if gom else 0
+
+    # 4) Claude: kalan diller arası birleştirme + Türkçe özet
     if client is None:
         client = summarize.istemci()
     birlesen = ozetlenen = 0
@@ -82,8 +114,9 @@ def tur(ayar: Ayarlar, client=None):
 
     n_olay = export.yaz(con, ayar)
     hatali = sum(1 for _, _, h in sonuclar if h)
-    log.info("feed: %d/%d çalıştı · yeni haber: %d · yeni olay: %d · birleşen: %d · özetlenen: %d · dışa aktarılan olay: %d",
-             len(sonuclar) - hatali, len(sonuclar), len(yeni), len(acilan), birlesen, ozetlenen, n_olay)
+    log.info("feed: %d/%d çalıştı · yeni haber: %d · yeni olay: %d · gömme ile birleşen: %d · Claude ile birleşen: %d"
+             " · özetlenen: %d · dışa aktarılan olay: %d",
+             len(sonuclar) - hatali, len(sonuclar), len(yeni), len(acilan), gomme_birlesen, birlesen, ozetlenen, n_olay)
     con.close()
 
 
@@ -102,6 +135,8 @@ def main():
     p.add_argument("--kaynaklar", type=Path, help="sources.yaml yerine başka bir dosya")
     p.add_argument("--db", type=Path)
     p.add_argument("--cikti", type=Path)
+    p.add_argument("--site", type=Path, nargs="?", const=KOK / "public",
+                   help="her turdan sonra siteyi bu klasöre yeniden oluştur (varsayılan: public)")
     a = p.parse_args()
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
     ayar = Ayarlar()
@@ -114,11 +149,18 @@ def main():
 
     if a.komut == "feed-durum":
         return feed_durum(ayar)
+
+    def tur_ve_site():
+        tur(ayar)
+        if a.site:
+            from web.build import olustur
+            olustur(ayar.cikti_klasoru / "events.json", a.site)
+
     if a.komut == "tur":
-        return tur(ayar)
+        return tur_ve_site()
     while True:
         try:
-            tur(ayar)
+            tur_ve_site()
         except Exception:
             log.exception("tur başarısız; bir sonrakinde yeniden denenecek")
         time.sleep(a.aralik)

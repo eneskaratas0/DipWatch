@@ -73,6 +73,17 @@ class SahteClaude:
                                content=[SimpleNamespace(type="text", text=json.dumps(veri, ensure_ascii=False))])
 
 
+def sahte_gomucu(metinler):
+    """Konu anahtar kelimesine göre aynı vektörü verir: UAEA (Türkçe) ve IAEA (İngilizce) aynı konu."""
+    import numpy as np
+    konular = [("IAEA", "UAEA"), ("RSF",), ("sanctions",), ("Japan",)]
+    v = np.zeros((len(metinler), len(konular) + 1), dtype=np.float32)
+    for i, m in enumerate(metinler):
+        k = next((n for n, kel in enumerate(konular) if any(x in m for x in kel)), len(konular))
+        v[i, k] = 1
+    return v
+
+
 def calistir():
     tmp = Path(tempfile.mkdtemp())
     src = ["bolgeler:"]
@@ -89,7 +100,7 @@ def calistir():
     ayar = Ayarlar(kaynak_dosyasi=tmp / "sources.yaml", veritabani=tmp / "t.db", cikti_klasoru=tmp / "out")
 
     # 1) Claude'suz tur
-    ana.tur(ayar, client=False)
+    ana.tur(ayar, client=False, gom=False)
     con = db.baglan(ayar.veritabani)
     olaylar = con.execute("SELECT id, haber_sayisi, kaynak_sayisi FROM olay WHERE birlesti IS NULL AND haber_sayisi>0").fetchall()
     gruplar = {o["id"]: [r["baslik"][:40] for r in con.execute("SELECT baslik FROM haber WHERE olay_id=?", (o["id"],))] for o in olaylar}
@@ -99,17 +110,28 @@ def calistir():
     assert boyutlar == [1, 1, 2, 2, 2], f"beklenmeyen gruplama: {boyutlar}"
 
     # 2) Aynı beslemeler tekrar: yeni haber eklenmemeli
-    ana.tur(ayar, client=False)
+    ana.tur(ayar, client=False, gom=False)
     assert con.execute("SELECT COUNT(*) FROM haber").fetchone()[0] == 8
 
     # 3) Sahte Claude ile: birleştirme + özet yolu
     con.execute("DELETE FROM haber"); con.execute("DELETE FROM olay"); con.commit()
     sahte = SahteClaude()
-    ana.tur(ayar, client=sahte)
+    ana.tur(ayar, client=sahte, gom=False)
     iran = con.execute("SELECT o.* FROM olay o JOIN haber h ON h.olay_id=o.id WHERE h.baslik LIKE '%UAEA%'").fetchone()
     assert iran["haber_sayisi"] == 3 and iran["tr_ozet"] == "Test özeti.", dict(iran)
     for c in sahte.cagrilar:
         assert c["output_config"]["format"]["type"] == "json_schema" and c["fallbacks"] == "default"
+
+    # 4) Anahtarsız: Türkçe İran haberi gömme modeliyle İngilizce olaya katılmalı, başlık Türkçe seçilmeli
+    con.execute("DELETE FROM haber"); con.execute("DELETE FROM olay"); con.commit()
+    ana.tur(ayar, client=False, gom=sahte_gomucu)
+    iran = con.execute("SELECT o.* FROM olay o JOIN haber h ON h.olay_id=o.id WHERE h.baslik LIKE '%UAEA%'").fetchone()
+    assert iran["haber_sayisi"] == 3 and iran["tr_ozet"] is None, dict(iran)
+    olay_sayisi = con.execute("SELECT COUNT(*) FROM olay WHERE birlesti IS NULL AND haber_sayisi>0").fetchone()[0]
+    assert olay_sayisi == 4, olay_sayisi
+    veri = json.loads((tmp / "out" / "events.json").read_text(encoding="utf-8"))
+    iran_json = next(o for o in veri["olaylar"] if o["id"] == iran["id"])
+    assert "UAEA" in iran_json["baslik"], iran_json["baslik"]
 
     veri = json.loads((tmp / "out" / "events.json").read_text(encoding="utf-8"))
     assert veri["olaylar"][0]["kaynaklar"], "olayın kaynak listesi boş"

@@ -1,4 +1,8 @@
 data/
 __pycache__/
 *.pyc
+# API anahtarları: asla commit'lenmez
 .env
+.env.*
+!.env.example
+public/

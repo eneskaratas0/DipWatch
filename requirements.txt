@@ -1,3 +1,4 @@
 feedparser>=6.0
 PyYAML>=6.0
 anthropic>=1.0
+fastembed>=0.4      # isteğe bağlı: anahtarsız diller arası birleştirme

@@ -11,6 +11,12 @@ def _bolge_tahmini(haberler):
     return c.most_common(1)[0][0] if c else "kuresel"
 
 
+def _baslik_sec(haberler):
+    """Claude özeti yoksa: olayda Türkçe kaynak varsa onun en son başlığı, yoksa ilk haberin başlığı."""
+    turkce = [h for h in haberler if h["dil"] == "tr"]
+    return turkce[-1]["baslik"] if turkce else haberler[0]["baslik"]
+
+
 def olaylari_getir(con, saat: int):
     sinir = (datetime.now(timezone.utc) - timedelta(hours=saat)).isoformat()
     sonuc = []
@@ -22,7 +28,7 @@ def olaylari_getir(con, saat: int):
             (o["id"],))]
         sonuc.append({
             "id": o["id"],
-            "baslik": o["tr_baslik"] or haberler[0]["baslik"],
+            "baslik": o["tr_baslik"] or _baslik_sec(haberler),
             "ozet": o["tr_ozet"],
             "turkce_ozet_var": bool(o["tr_ozet"]),
             "bolge": o["bolge"] or _bolge_tahmini(haberler),
