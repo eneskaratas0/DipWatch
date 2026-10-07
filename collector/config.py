@@ -6,7 +6,14 @@ from pathlib import Path
 import yaml
 
 KOK = Path(__file__).resolve().parent.parent
-GOOGLE_NEWS = "https://news.google.com/rss/search?q=site:{}+when:1d&hl=en-US&gl=US&ceid=US:en"
+# Google News "site:" sorgusu. Türkçe kaynaklar Türkiye baskısında aranmalı; İngilizce baskı onları
+# neredeyse hiç döndürmüyor. Seyrek yayın yapan kaynaklar (düşünce kuruluşları) için gn_sure: 7d.
+GOOGLE_NEWS = "https://news.google.com/rss/search?q=site:{alan}+when:{sure}&{baski}"
+GN_BASKI = {"tr": "hl=tr&gl=TR&ceid=TR:tr", "en": "hl=en-US&gl=US&ceid=US:en"}
+
+
+def google_news_url(alan_adi: str, dil: str = "en", sure: str = "1d") -> str:
+    return GOOGLE_NEWS.format(alan=alan_adi, sure=sure, baski=GN_BASKI.get(dil, GN_BASKI["en"]))
 
 
 @dataclass
@@ -42,14 +49,14 @@ class Ayarlar:
     extra: dict = field(default_factory=dict)
 
 
-def kaynaklari_yukle(yol: Path) -> list[Kaynak]:
+def kaynaklari_yukle(yol: Path, kapalilar: bool = False) -> list[Kaynak]:
     veri = yaml.safe_load(open(yol, encoding="utf-8"))["bolgeler"]
     sonuc = []
     for bolge, liste in veri.items():
         for s in liste or []:
-            if s.get("durum") == "kapali":
+            if s.get("durum") == "kapali" and not kapalilar:
                 continue
-            url = s.get("url") or GOOGLE_NEWS.format(s["alan_adi"])
+            url = s.get("url") or google_news_url(s["alan_adi"], s.get("dil", "en"), s.get("gn_sure", "1d"))
             sonuc.append(Kaynak(ad=s["ad"], bolge=bolge, url=url, tur=s.get("tur", ""),
                                 dil=s.get("dil", "en"), ulke=s.get("ulke", ""),
                                 yontem=s.get("yontem", "rss")))
