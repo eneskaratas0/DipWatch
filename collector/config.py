@@ -6,6 +6,22 @@ from pathlib import Path
 import yaml
 
 KOK = Path(__file__).resolve().parent.parent
+
+
+def env_dosyasi_yukle(yol: Path = KOK / ".env") -> None:
+    """Proje kökündeki .env dosyasını ortam değişkenlerine yükler (.gitignore'da, GitHub'a gitmez).
+    Terminalde zaten tanımlı bir değişkenin üzerine yazmaz."""
+    if not yol.exists():
+        return
+    for satir in yol.read_text(encoding="utf-8").splitlines():
+        satir = satir.strip()
+        if not satir or satir.startswith("#") or "=" not in satir:
+            continue
+        ad, deger = satir.removeprefix("export ").split("=", 1)
+        os.environ.setdefault(ad.strip(), deger.strip().strip('"').strip("'"))
+
+
+env_dosyasi_yukle()
 # Google News "site:" sorgusu. Türkçe kaynaklar Türkiye baskısında aranmalı; İngilizce baskı onları
 # neredeyse hiç döndürmüyor. Seyrek yayın yapan kaynaklar (düşünce kuruluşları) için gn_sure: 7d.
 GOOGLE_NEWS = "https://news.google.com/rss/search?q=site:{alan}+when:{sure}&{baski}"

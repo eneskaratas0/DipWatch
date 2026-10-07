@@ -7,12 +7,18 @@
 
 ```bash
 pip install -r requirements.txt
-export ANTHROPIC_API_KEY=...          # yoksa özetler atlanır, gruplama yine çalışır
+cp .env.example .env                  # sonra .env içine ANTHROPIC_API_KEY'i yaz (yoksa özetler atlanır)
 python -m collector tur               # tek tur
 python -m collector dongu --aralik 300  # her 5 dakikada bir
 python -m collector feed-durum        # hangi besleme çalışıyor, hangisi hata veriyor
 python -m tests.test_collector        # ağsız test (sahte beslemeler + sahte Claude)
 ```
+
+## API anahtarı
+
+Anahtarı https://console.anthropic.com/settings/keys adresinden al ve proje kökündeki `.env` dosyasına
+`ANTHROPIC_API_KEY=sk-ant-...` olarak yaz. Toplayıcı bu dosyayı kendisi okur. `.env` `.gitignore` içinde
+olduğu için GitHub'a gönderilmez; `git status` çıktısında görünmemesi gerekir.
 
 ## Çıktılar (`data/`)
 
