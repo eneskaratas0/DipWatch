@@ -73,7 +73,7 @@ def sadelestir(metin: str) -> str:
 def eslesen_kelimeler(olay: dict, kelimeler: list) -> list:
     metin = sadelestir(" ".join([olay["baslik"] or "", olay["ozet"] or "", *olay["ulkeler"], *olay["etiketler"],
                                 *(k["baslik"] or "" for k in olay["kaynaklar"])]))
-    return [k for k in kelimeler if re.search(r"(?<!\w)" + re.escape(sadelestir(k)) + r"(?!\w)", metin)]
+    return [k for k in kelimeler if re.search(r"(?<!\w)" + re.escape(sadelestir(k)), metin)]
 
 
 def uyuyor_mu(olay: dict, kurallar: Kurallar) -> bool:
