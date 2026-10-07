@@ -1,0 +1,32 @@
+# Telegram bildirim ayarları (4. adım). Bot anahtarı ve sohbet kimliği burada DEĞİL, .env dosyasında durur.
+#
+# Bir olay şu durumlarda bildirilir:
+#   - yeni: ölçütlere ilk kez uyduğunda (en az `min_kaynak` farklı kaynak haber yapmışsa)
+#   - büyüyen: son bildirimden bu yana `buyume_esigi` kadar yeni kaynak eklendiyse
+#     (güncelleme, önceki mesaja yanıt olarak gelir)
+#
+# Bölge VEYA anahtar kelime uyması yeterli. İkisi de boşsa tüm olaylar bildirilir.
+
+# Bölge anahtarları: orta_dogu, rusya_ukrayna_kafkasya, avrupa, asya_pasifik, afrika, amerika, turkiye, kuresel
+# Not: Claude anahtarı yoksa olayın bölgesi kaynakların bölgesinden tahmin edilir ve bazen yanılır;
+# önemli konular için anahtar kelime eklemek daha güvenilir.
+bolgeler:
+  - orta_dogu
+
+# Başlık, özet, ülkeler, etiketler ve kaynak başlıklarında aranır. Büyük/küçük harf ve Türkçe harf farkı
+# önemsizdir (İran = iran = Iran). Kelime başı eşleşir: "İran" → "Iranian" yakalanır, "NATO" → "senator" yakalanmaz.
+# Türkçe ve İngilizce haber başlıkları için ikisini de yazmak iyi olur.
+anahtar_kelimeler:
+  - İran
+  - Iran
+  - Gazze
+  - Gaza
+  - NATO
+
+min_kaynak: 2           # kaç farklı kaynak haber yapınca bildirilsin
+min_onem: 0             # 1-5; yalnızca Claude özeti olan olaylarda puan var. 0 = puanı dikkate alma
+buyume_esigi: 3         # son bildirimden sonra bu kadar yeni kaynak gelirse güncelleme gönder (0 = kapalı)
+tur_basina_en_fazla: 10 # bir turda en fazla kaç mesaj (fazlası bir sonraki tura kalır)
+gosterilecek_kaynak: 6  # mesajda listelenecek kaynak linki sayısı
+# Site bir yere yüklendiyse adresi (ör. https://kullanici.github.io/DipWatch/). Mesaja olay sayfası linki eklenir.
+site_adresi: ""

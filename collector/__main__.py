@@ -4,6 +4,8 @@ Kullanım:
   python -m collector tur                 # bir kez çek, grupla, özetle, dışa aktar
   python -m collector dongu --aralik 300  # her 5 dakikada bir tur
   python -m collector feed-durum          # hangi beslemeler çalışıyor / bozuk
+  python -m collector telegram-chat-id    # bota yazan sohbetlerin kimliğini göster (.env için)
+  python -m collector telegram-test       # Telegram'a deneme mesajı gönder
   --site eklenirse her turdan sonra public/ klasöründeki site de yeniden oluşturulur.
 """
 import argparse
@@ -12,7 +14,7 @@ import time
 from datetime import datetime, timezone
 from pathlib import Path
 
-from . import cluster, db, export, fetch, summarize
+from . import cluster, db, export, fetch, summarize, telegram
 from .config import KOK, Ayarlar, kaynaklari_yukle
 
 log = logging.getLogger("dipwatch")
@@ -56,8 +58,8 @@ def gomme_ile_birlestir(con, ayar, gom, acilan) -> int:
     return birlesen
 
 
-def tur(ayar: Ayarlar, client=None, gom=None):
-    """client / gom: None ise ayarlardan oluşturulur, False ise ilgili adım atlanır."""
+def tur(ayar: Ayarlar, client=None, gom=None, bot=None):
+    """client / gom / bot: None ise ayarlardan oluşturulur, False ise ilgili adım atlanır."""
     con = db.baglan(ayar.veritabani)
     kaynaklar = kaynaklari_yukle(ayar.kaynak_dosyasi)
     sonuclar = fetch.hepsini_cek(kaynaklar, ayar.paralel, ayar.zaman_asimi)
@@ -113,10 +115,18 @@ def tur(ayar: Ayarlar, client=None, gom=None):
         log.info("Claude kimlik bilgisi yok: Türkçe özet ve diller arası birleştirme atlandı")
 
     n_olay = export.yaz(con, ayar)
+
+    # 5) Telegram: seçilen bölge / anahtar kelimelerde yeni veya büyüyen olaylar (.env'de anahtar yoksa atlanır)
+    bildirilen = 0
+    if bot is not False:
+        try:
+            bildirilen = telegram.bildir(con, ayar, bot)
+        except Exception:
+            log.exception("Telegram bildirimi başarısız; bir sonraki turda yeniden denenecek")
     hatali = sum(1 for _, _, h in sonuclar if h)
     log.info("feed: %d/%d çalıştı · yeni haber: %d · yeni olay: %d · gömme ile birleşen: %d · Claude ile birleşen: %d"
-             " · özetlenen: %d · dışa aktarılan olay: %d",
-             len(sonuclar) - hatali, len(sonuclar), len(yeni), len(acilan), gomme_birlesen, birlesen, ozetlenen, n_olay)
+             " · özetlenen: %d · dışa aktarılan olay: %d · Telegram mesajı: %d",
+             len(sonuclar) - hatali, len(sonuclar), len(yeni), len(acilan), gomme_birlesen, birlesen, ozetlenen, n_olay, bildirilen)
     con.close()
 
 
@@ -130,7 +140,7 @@ def feed_durum(ayar: Ayarlar):
 
 def main():
     p = argparse.ArgumentParser(prog="collector")
-    p.add_argument("komut", choices=["tur", "dongu", "feed-durum"])
+    p.add_argument("komut", choices=["tur", "dongu", "feed-durum", "telegram-chat-id", "telegram-test"])
     p.add_argument("--aralik", type=int, default=300, help="dongu: turlar arası saniye")
     p.add_argument("--kaynaklar", type=Path, help="sources.yaml yerine başka bir dosya")
     p.add_argument("--db", type=Path)
@@ -149,6 +159,10 @@ def main():
 
     if a.komut == "feed-durum":
         return feed_durum(ayar)
+    if a.komut == "telegram-chat-id":
+        return telegram.chat_id_bul()
+    if a.komut == "telegram-test":
+        return telegram.test_mesaji()
 
     def tur_ve_site():
         tur(ayar)

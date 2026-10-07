@@ -84,13 +84,14 @@ def sahte_gomucu(metinler):
     return v
 
 
-def calistir():
+def ortam_kur(feeds=FEEDS):
+    """Sahte beslemeleri ve sources.yaml'ı geçici bir klasöre yazar, ayarları döndürür."""
     tmp = Path(tempfile.mkdtemp())
     src = ["bolgeler:"]
-    for anahtar, (ad, bolge, dil, ogeler) in FEEDS.items():
+    for anahtar, (ad, bolge, dil, ogeler) in feeds.items():
         (tmp / f"{anahtar}.xml").write_text(rss(ad, ogeler), encoding="utf-8")
     bolgeler = {}
-    for anahtar, (ad, bolge, dil, _) in FEEDS.items():
+    for anahtar, (ad, bolge, dil, _) in feeds.items():
         bolgeler.setdefault(bolge, []).append(
             f'    - {{ad: {ad}, tur: x, dil: {dil}, yontem: rss, url: "file://{tmp}/{anahtar}.xml"}}')
     for b, satirlar in bolgeler.items():
@@ -98,9 +99,14 @@ def calistir():
     (tmp / "sources.yaml").write_text("\n".join(src), encoding="utf-8")
 
     ayar = Ayarlar(kaynak_dosyasi=tmp / "sources.yaml", veritabani=tmp / "t.db", cikti_klasoru=tmp / "out")
+    return tmp, ayar
+
+
+def calistir():
+    tmp, ayar = ortam_kur()
 
     # 1) Claude'suz tur
-    ana.tur(ayar, client=False, gom=False)
+    ana.tur(ayar, client=False, gom=False, bot=False)
     con = db.baglan(ayar.veritabani)
     olaylar = con.execute("SELECT id, haber_sayisi, kaynak_sayisi FROM olay WHERE birlesti IS NULL AND haber_sayisi>0").fetchall()
     gruplar = {o["id"]: [r["baslik"][:40] for r in con.execute("SELECT baslik FROM haber WHERE olay_id=?", (o["id"],))] for o in olaylar}
@@ -110,13 +116,13 @@ def calistir():
     assert boyutlar == [1, 1, 2, 2, 2], f"beklenmeyen gruplama: {boyutlar}"
 
     # 2) Aynı beslemeler tekrar: yeni haber eklenmemeli
-    ana.tur(ayar, client=False, gom=False)
+    ana.tur(ayar, client=False, gom=False, bot=False)
     assert con.execute("SELECT COUNT(*) FROM haber").fetchone()[0] == 8
 
     # 3) Sahte Claude ile: birleştirme + özet yolu
     con.execute("DELETE FROM haber"); con.execute("DELETE FROM olay"); con.commit()
     sahte = SahteClaude()
-    ana.tur(ayar, client=sahte, gom=False)
+    ana.tur(ayar, client=sahte, gom=False, bot=False)
     iran = con.execute("SELECT o.* FROM olay o JOIN haber h ON h.olay_id=o.id WHERE h.baslik LIKE '%UAEA%'").fetchone()
     assert iran["haber_sayisi"] == 3 and iran["tr_ozet"] == "Test özeti.", dict(iran)
     for c in sahte.cagrilar:
@@ -124,7 +130,7 @@ def calistir():
 
     # 4) Anahtarsız: Türkçe İran haberi gömme modeliyle İngilizce olaya katılmalı, başlık Türkçe seçilmeli
     con.execute("DELETE FROM haber"); con.execute("DELETE FROM olay"); con.commit()
-    ana.tur(ayar, client=False, gom=sahte_gomucu)
+    ana.tur(ayar, client=False, gom=sahte_gomucu, bot=False)
     iran = con.execute("SELECT o.* FROM olay o JOIN haber h ON h.olay_id=o.id WHERE h.baslik LIKE '%UAEA%'").fetchone()
     assert iran["haber_sayisi"] == 3 and iran["tr_ozet"] is None, dict(iran)
     olay_sayisi = con.execute("SELECT COUNT(*) FROM olay WHERE birlesti IS NULL AND haber_sayisi>0").fetchone()[0]
