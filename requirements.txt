@@ -1,4 +1,4 @@
 feedparser>=6.0
 PyYAML>=6.0
-anthropic>=1.0
+anthropic>=1.0        # yalnızca Claude ile özet için (Gemini/Groq ek paket istemez)
 fastembed>=0.4      # isteğe bağlı: anahtarsız diller arası birleştirme

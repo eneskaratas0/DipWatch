@@ -11,7 +11,7 @@ Uluslararası siyasetteki gelişmeleri izlemek için haber toplayıcı (2. adım
 
 ```bash
 pip install -r requirements.txt
-cp .env.example .env                  # sonra .env içine ANTHROPIC_API_KEY'i yaz (yoksa özetler atlanır)
+cp .env.example .env                  # sonra .env içine GEMINI_API_KEY (ücretsiz) ya da ANTHROPIC_API_KEY yaz (yoksa özetler atlanır)
 python -m collector tur               # tek tur
 python -m collector dongu --aralik 300  # her 5 dakikada bir
 python -m collector feed-durum        # hangi besleme çalışıyor, hangisi hata veriyor
@@ -26,8 +26,23 @@ python veri_kalite.py                 # veri kalitesi tanı raporu (bkz. "Veri k
 
 ## API anahtarı
 
-Anahtarı https://console.anthropic.com/settings/keys adresinden al ve proje kökündeki `.env` dosyasına
-`ANTHROPIC_API_KEY=sk-ant-...` olarak yaz. Toplayıcı bu dosyayı kendisi okur. `.env` `.gitignore` içinde
+Türkçe özetler için üç sağlayıcıdan biri yeterli; anahtarlar proje kökündeki `.env` dosyasına yazılır.
+
+| Sağlayıcı | Ücret | Anahtar | `.env` satırı |
+|---|---|---|---|
+| Google Gemini (önerilen) | ücretsiz katman, kart gerekmez | https://aistudio.google.com/apikey | `GEMINI_API_KEY=...` |
+| Groq (yedek) | ücretsiz katman, kart gerekmez | https://console.groq.com/keys | `GROQ_API_KEY=...` |
+| Claude | ücretli, en iyi kalite | https://console.anthropic.com/settings/keys | `ANTHROPIC_API_KEY=sk-ant-...` |
+
+Birden fazla anahtar varsa öncelik Claude, Gemini, Groq sırasıdır; `DIPWATCH_LLM=gemini` gibi bir satırla
+zorlanabilir. Gemini ve Groq ikisi de yazılıysa Gemini'nin günlük kotası dolunca (HTTP 429) o tur Groq ile
+devam edilir. Ücretsiz katmanların kotası sınırlı ve Google zaman zaman değiştiriyor; güncel sınırlar
+AI Studio'daki proje sayfasında görünür. Kota dolunca kalan olaylar özetsiz listelenir ve bir sonraki turda
+yeniden denenir. Ücretsiz kotayı korumak için Gemini/Groq ile diller arası birleştirme yalnızca gömme
+modeliyle yapılır (`DIPWATCH_LLM_BIRLESTIRME=1` ile LLM'e de açılabilir). Google ücretsiz katmandaki
+istekleri modellerini geliştirmek için kullanabilir; burada gönderilen yalnızca herkese açık haber başlıkları.
+
+Toplayıcı `.env` dosyasını kendisi okur. `.env` `.gitignore` içinde
 olduğu için GitHub'a gönderilmez; `git status` çıktısında görünmemesi gerekir.
 
 ## Çıktılar (`data/`)
@@ -61,7 +76,7 @@ olduğu için GitHub'a gönderilmez; `git status` çıktısında görünmemesi g
    eşik, o ortak temadaki ilgisiz haberleri de kendine çekip 100+ habere varan sahte mega-olaylar oluşturabiliyordu;
    bkz. "Veri kalitesi".) Model ilk turda indirilir (~220 MB). İlk tur tüm başlıkları işlediği için ~5 dakika,
    sonraki turlar ~35 saniye sürer. Claude anahtarı varsa, kalan olaylar ayrıca tek bir Claude çağrısıyla kontrol edilir.
-4. **Türkçe özet** (Claude anahtarı gerekir): en az 2 farklı kaynağı olan ve yeni haber almış olaylar özetlenir (tur başına en fazla 40).
+4. **Türkçe özet** (Claude, Gemini ya da Groq anahtarı gerekir): en az 2 farklı kaynağı olan ve yeni haber almış olaylar özetlenir (tur başına en fazla 40).
    Özet; başlık, 2-4 cümle, bölge, ülkeler, etiketler ve 1-5 önem puanı içerir. Kaynaklar çelişiyorsa özette belirtilir.
    Anahtar yoksa olay başlığı, kümenin merkez (gömme) vektörüne en yakın başlık olur -- "Explainer"/"analysis"/
    "... - live" gibi kalıp başlıklar elenerek, eşitlikte Türkçe tercih edilerek. Gömme hiç çalışmadıysa en son
@@ -97,7 +112,11 @@ kendiliğinden temizlenir; daha yeniyse ve eminsen elle silip tekrar deneyebilir
 
 | Değişken | Varsayılan | Anlamı |
 |---|---|---|
-| `DIPWATCH_MODEL` | `claude-opus-5-5` | özet modeli |
+| `DIPWATCH_LLM` | (otomatik) | `claude`, `gemini` ya da `groq`: özet sağlayıcısını zorlar |
+| `DIPWATCH_MODEL` | `claude-opus-5-5` | Claude özet modeli |
+| `DIPWATCH_GEMINI_MODEL` | `gemini-flash-lite-latest` | Gemini modeli (ücretsiz kotası en geniş olan Flash-Lite) |
+| `DIPWATCH_GROQ_MODEL` | `openai/gpt-oss-120b` | Groq modeli |
+| `DIPWATCH_LLM_BIRLESTIRME` | `0` | Gemini/Groq ile diller arası birleştirme (kota harcar) |
 | `DIPWATCH_EFOR` | `low` | düşünme eforu (low/medium/high) |
 | `DIPWATCH_OZET_MIN_KAYNAK` | `2` | kaç kaynaklı olaylar özetlensin |
 | `DIPWATCH_GOMME` | `1` | `0` yapılırsa gömme ile birleştirme kapanır |

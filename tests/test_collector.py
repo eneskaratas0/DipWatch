@@ -421,8 +421,58 @@ def test_embed_periyodik_birlestirme():
     print("TAMAM · embed birleştirmesi artık tüm aktif olayları periyodik olarak yeniden değerlendiriyor")
 
 
+def test_ucretsiz_saglayici_zinciri():
+    """Gemini 429 verince Groq'a geçilmeli; şemaya uymayan / kod bloklu yanıtlar doğru işlenmeli."""
+    import io
+    import urllib.error
+    import urllib.request
+    from collector import summarize
+
+    cagrilar = []
+
+    def sahte_urlopen(istek, *a, **kw):
+        # fetch.py de urllib kullanıyor (file:// beslemeler): yalnızca LLM isteklerini taklit et
+        if not (isinstance(istek, urllib.request.Request) and "chat/completions" in istek.full_url):
+            return eski(istek, *a, **kw)
+        govde = json.loads(istek.data)
+        cagrilar.append((istek.full_url, govde))
+        assert govde["response_format"] == {"type": "json_object"} and "JSON" in govde["messages"][0]["content"]
+        if "googleapis" in istek.full_url:
+            raise urllib.error.HTTPError(istek.full_url, 429, "kota", {}, io.BytesIO(b"quota"))
+        icerik = govde["messages"][1]["content"]
+        if "YENİ:" in icerik:
+            veri = {"eslesmeler": []}
+        else:
+            veri = {"baslik": "Ücretsiz başlık", "ozet": "Ücretsiz özet.", "bolge": "uydurma_bolge",
+                    "ulkeler": ["İran"], "etiketler": [], "onem": 4}
+        metin = "```json\n" + json.dumps(veri, ensure_ascii=False) + "\n```"
+        return io.BytesIO(json.dumps({"choices": [{"message": {"content": metin}}]}).encode())
+
+    eski = summarize.urllib.request.urlopen
+    summarize.urllib.request.urlopen = sahte_urlopen
+    try:
+        tmp, ayar = ortam_kur()
+        zincir = [(ad, {**summarize.UCRETSIZ[ad], "aralik": 0}, "test-anahtar") for ad in ("gemini", "groq")]
+        istemci = summarize.UcretsizIstemci(zincir)
+        ana.tur(ayar, client=istemci, gom=False, bot=False)
+    finally:
+        summarize.urllib.request.urlopen = eski
+    con = db.baglan(ayar.veritabani)
+    ozetli = con.execute("SELECT * FROM olay WHERE tr_ozet IS NOT NULL").fetchall()
+    assert ozetli and all(o["tr_ozet"] == "Ücretsiz özet." and o["bolge"] is None for o in ozetli), \
+        [dict(o) for o in ozetli]
+    # Gemini bir kez 429 verdi, sonra dinlendirildi: geri kalan tüm istekler Groq'a gitmeli
+    assert sum("googleapis" in u for u, _ in cagrilar) == 1, [u for u, _ in cagrilar]
+    # Ücretsiz sağlayıcıda LLM ile birleştirme varsayılan kapalı (kota gömme modeline bırakılır)
+    assert not any("YENİ:" in g["messages"][1]["content"] for _, g in cagrilar)
+
+    assert summarize._sema_uygun({"eslesmeler": "yok"}, summarize.BIRLESTIR_SEMA) is False
+    print(f"TAMAM · ücretsiz sağlayıcı zinciri ({len(cagrilar)} sahte istek)")
+
+
 if __name__ == "__main__":
     calistir()
+    test_ucretsiz_saglayici_zinciri()
     test_bolge_tahmini_icerikten()
     test_nobel_kalip_baslik_ayrisir()
     test_gecersiz_baslik_filtrelenir()

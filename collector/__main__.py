@@ -156,7 +156,7 @@ def tur(ayar: Ayarlar, client=None, gom=None, bot=None):
             client = summarize.istemci()
         birlesen = ozetlenen = 0
         if client:
-            if ayar.llm_birlestirme:
+            if ayar.llm_birlestirme and getattr(client, "birlestirme", True):
                 for yeni_id, mevcut_id in summarize.birlestirme_onerileri(con, ayar, client, acilan):
                     hedef = cluster.kok_olay(con, mevcut_id)
                     if hedef != cluster.kok_olay(con, yeni_id):
@@ -165,7 +165,7 @@ def tur(ayar: Ayarlar, client=None, gom=None, bot=None):
                 con.commit()
             ozetlenen = summarize.ozetle(con, ayar, client)
         else:
-            log.info("Claude kimlik bilgisi yok: Türkçe özet ve diller arası birleştirme atlandı")
+            log.info("LLM anahtarı yok (ANTHROPIC/GEMINI/GROQ): Türkçe özet ve diller arası birleştirme atlandı")
 
         n_olay = export.yaz(con, ayar)
 
@@ -288,7 +288,7 @@ def yeniden_grupla(ayar: Ayarlar, saat: int | None = None, client=None, gom=None
             client = summarize.istemci()
         birlesen = ozetlenen = 0
         if client:
-            if ayar.llm_birlestirme:
+            if ayar.llm_birlestirme and getattr(client, "birlestirme", True):
                 for zayif_id, guclu_id in summarize.birlestirme_onerileri(con, ayar, client, acilan_toplam):
                     hedef = cluster.kok_olay(con, guclu_id)
                     if hedef != cluster.kok_olay(con, zayif_id):
