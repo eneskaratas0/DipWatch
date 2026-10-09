@@ -161,7 +161,10 @@ def sayfa(baslik, govde, kok="", aciklama="DipWatch: uluslararası siyaset olay 
 
 
 def _baslik_dili(o):
-    """o['baslik'] hangi kaynağın başlığıysa onun dili; bulunamazsa ilk kaynağın dili."""
+    """o['baslik'] hangi kaynağın başlığıysa onun dili; bulunamazsa ilk kaynağın dili.
+    LLM özeti ya da makine çevirisi varsa başlık Türkçedir."""
+    if o.get("turkce_ozet_var") or o.get("makine_cevirisi"):
+        return "tr"
     kaynaklar = o.get("kaynaklar") or ()
     for k in kaynaklar:
         if k.get("baslik") == o["baslik"]:
@@ -386,7 +389,11 @@ def olay_sayfasi(o, kok="../"):
     ilk, son = zaman(o["ilk_haber"]), zaman(o["son_haber"])
     kaynaklar = sorted(o["kaynaklar"], key=lambda k: k.get("yayin") or "")
 
-    if o.get("ozet"):
+    if o.get("makine_cevirisi"):
+        ozet = ((f'<p class="ozet buyuk">{e(o["ozet"])}</p>' if o.get("ozet") else "")
+                + '<p class="not">Bu başlık ve metin, kaynak haberlerden birinin makine çevirisidir; '
+                  'olayın özeti henüz yazılmadı.</p>')
+    elif o.get("ozet"):
         ozet = f'<p class="ozet buyuk">{e(o["ozet"])}</p>'
     else:
         ozet = ('<p class="not">Bu olay için henüz Türkçe özet yok. Başlık kaynaklardan birinden alındı; '

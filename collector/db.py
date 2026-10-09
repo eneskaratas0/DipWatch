@@ -26,6 +26,7 @@ CREATE TABLE IF NOT EXISTS olay (
     -- Claude'un yazdığı alanlar (yoksa NULL)
     tr_baslik TEXT, tr_ozet TEXT, bolge TEXT, ulkeler TEXT, etiketler TEXT, onem INTEGER,
     ozet_haber_sayisi INTEGER DEFAULT 0,   -- özet yazıldığında kaç haber vardı
+    ozet_turu TEXT,                        -- 'llm' | 'ceviri' (LLM kotası dolunca makine çevirisi, bkz. ceviri.py)
     birlesti INTEGER REFERENCES olay(id)    -- başka olaya katıldıysa
 );
 
@@ -52,5 +53,7 @@ def baglan(yol: Path) -> sqlite3.Connection:
         con.execute("ALTER TABLE haber ADD COLUMN baslik_norm TEXT")
     if "icerik_turu" not in sutunlar:
         con.execute("ALTER TABLE haber ADD COLUMN icerik_turu TEXT DEFAULT 'haber'")
+    if "ozet_turu" not in {r[1] for r in con.execute("PRAGMA table_info(olay)")}:
+        con.execute("ALTER TABLE olay ADD COLUMN ozet_turu TEXT")
     con.execute("CREATE INDEX IF NOT EXISTS haber_kaynak_baslik ON haber(kaynak, baslik_norm)")
     return con

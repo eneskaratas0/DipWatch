@@ -58,6 +58,9 @@ class Ayarlar:
     efor: str = os.environ.get("DIPWATCH_EFOR", "low")
     ozet_min_kaynak: int = int(os.environ.get("DIPWATCH_OZET_MIN_KAYNAK", "2"))
     ozet_max_olay_tur: int = 40        # bir turda en fazla kaç olay özetlensin
+    # LLM yoksa / kotası dolduysa ücretsiz çeviri servisleriyle Türkçe başlık (bkz. ceviri.py)
+    ceviri_yedek: bool = os.environ.get("DIPWATCH_CEVIRI", "1") != "0"
+    ceviri_max_olay_tur: int = 20
     llm_birlestirme: bool = True       # farklı dillerdeki aynı olayı Claude ile birleştir
     # Çok dilli gömme modeliyle birleştirme (anahtarsız; fastembed gerekir)
     gomme_birlestirme: bool = os.environ.get("DIPWATCH_GOMME", "1") != "0"
