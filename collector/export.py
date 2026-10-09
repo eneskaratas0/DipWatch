@@ -53,6 +53,7 @@ def olaylari_getir(con, saat: int):
             "baslik": o["tr_baslik"] or _baslik_sec(haberler),
             "ozet": o["tr_ozet"],
             "turkce_ozet_var": bool(o["tr_ozet"]),
+            "makine_cevirisi": o["ozet_turu"] == "ceviri",  # LLM özeti değil, temsilci haberin çevirisi
             "bolge": o["bolge"] or bolge.tahmin_et(haberler),
             "ulkeler": json.loads(o["ulkeler"]) if o["ulkeler"] else [],
             "etiketler": json.loads(o["etiketler"]) if o["etiketler"] else [],

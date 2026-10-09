@@ -98,7 +98,8 @@ def ortam_kur(feeds=FEEDS):
         src += [f"  {b}:"] + satirlar
     (tmp / "sources.yaml").write_text("\n".join(src), encoding="utf-8")
 
-    ayar = Ayarlar(kaynak_dosyasi=tmp / "sources.yaml", veritabani=tmp / "t.db", cikti_klasoru=tmp / "out")
+    ayar = Ayarlar(kaynak_dosyasi=tmp / "sources.yaml", veritabani=tmp / "t.db", cikti_klasoru=tmp / "out",
+                   ceviri_yedek=False)  # testler ağa çıkmasın; çeviri yedeği ayrı testte sahte servislerle
     return tmp, ayar
 
 
@@ -470,9 +471,49 @@ def test_ucretsiz_saglayici_zinciri():
     print(f"TAMAM · ücretsiz sağlayıcı zinciri ({len(cagrilar)} sahte istek)")
 
 
+def test_ceviri_yedegi():
+    """LLM yokken: engellenen servis atlanıp sıradakine geçilmeli, Türkçe haberi olan olay çevrilmemeli,
+    LLM sonradan çalışınca çeviri gerçek özetle değiştirilmeli."""
+    from collector import ceviri
+
+    cagrilar = []
+
+    def engelli(metin, dil):
+        cagrilar.append("google")
+        raise ceviri.Engellendi("test")
+
+    def sahte(metin, dil):
+        cagrilar.append("mymemory")
+        return "TR: " + metin
+
+    eski, ceviri.SERVISLER = ceviri.SERVISLER, [("google", engelli), ("mymemory", sahte)]
+    ceviri._dinlen.clear()
+    try:
+        tmp, ayar = ortam_kur()
+        ayar.ceviri_yedek = True
+        ana.tur(ayar, client=False, gom=False, bot=False)
+    finally:
+        ceviri.SERVISLER = eski
+        ceviri._dinlen.clear()
+    con = db.baglan(ayar.veritabani)
+    cevrilen = con.execute("SELECT * FROM olay WHERE ozet_turu='ceviri'").fetchall()
+    assert cevrilen, "çeviri yedeği hiçbir olaya yazılmadı"
+    assert cagrilar.count("google") == 1, cagrilar  # engellenince dinlendirildi
+    for o in cevrilen:
+        turkce = con.execute("SELECT 1 FROM haber WHERE olay_id=? AND dil='tr'", (o["id"],)).fetchone()
+        assert o["tr_baslik"].startswith("TR: ") != bool(turkce), dict(o)
+    veri = json.loads((tmp / "out" / "events.json").read_text(encoding="utf-8"))
+    assert any(o["makine_cevirisi"] for o in veri["olaylar"])
+
+    ana.tur(ayar, client=SahteClaude(), gom=False, bot=False)
+    assert not con.execute("SELECT 1 FROM olay WHERE ozet_turu='ceviri'").fetchone()
+    print(f"TAMAM · çeviri yedeği ({len(cevrilen)} olay, {len(cagrilar)} sahte çeviri isteği)")
+
+
 if __name__ == "__main__":
     calistir()
     test_ucretsiz_saglayici_zinciri()
+    test_ceviri_yedegi()
     test_bolge_tahmini_icerikten()
     test_nobel_kalip_baslik_ayrisir()
     test_gecersiz_baslik_filtrelenir()

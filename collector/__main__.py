@@ -18,7 +18,7 @@ import time
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
-from . import cluster, db, export, fetch, summarize, telegram
+from . import ceviri, cluster, db, export, fetch, summarize, telegram
 from .config import KOK, Ayarlar, kaynaklari_yukle
 
 log = logging.getLogger("dipwatch")
@@ -166,6 +166,7 @@ def tur(ayar: Ayarlar, client=None, gom=None, bot=None):
             ozetlenen = summarize.ozetle(con, ayar, client)
         else:
             log.info("LLM anahtarı yok (ANTHROPIC/GEMINI/GROQ): Türkçe özet ve diller arası birleştirme atlandı")
+        cevrilen = ceviri.ceviriyle_doldur(con, ayar, export._baslik_sec) if ayar.ceviri_yedek else 0
 
         n_olay = export.yaz(con, ayar)
 
@@ -178,8 +179,9 @@ def tur(ayar: Ayarlar, client=None, gom=None, bot=None):
                 log.exception("Telegram bildirimi başarısız; bir sonraki turda yeniden denenecek")
         hatali = sum(1 for _, _, h in sonuclar if h)
         log.info("feed: %d/%d çalıştı · yeni haber: %d · yeni olay: %d · gömme ile birleşen: %d · Claude ile birleşen: %d"
-                 " · özetlenen: %d · dışa aktarılan olay: %d · Telegram mesajı: %d",
-                 len(sonuclar) - hatali, len(sonuclar), len(yeni), len(acilan), gomme_birlesen, birlesen, ozetlenen, n_olay, bildirilen)
+                 " · özetlenen: %d · çevirisi yazılan: %d · dışa aktarılan olay: %d · Telegram mesajı: %d",
+                 len(sonuclar) - hatali, len(sonuclar), len(yeni), len(acilan), gomme_birlesen, birlesen, ozetlenen,
+                 cevrilen, n_olay, bildirilen)
         con.close()
 
 

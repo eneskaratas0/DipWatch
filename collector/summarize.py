@@ -254,7 +254,7 @@ def ozetle(con, ayar, client) -> int:
             sonuc["bolge"] = None  # dışa aktarımda bolge.py tahmini kullanılır
         con.execute(
             """UPDATE olay SET tr_baslik=?, tr_ozet=?, bolge=?, ulkeler=?, etiketler=?, onem=?,
-                 ozet_haber_sayisi = haber_sayisi WHERE id=?""",
+                 ozet_turu='llm', ozet_haber_sayisi = haber_sayisi WHERE id=?""",
             (sonuc["baslik"], sonuc["ozet"], sonuc["bolge"],
              json.dumps(sonuc["ulkeler"], ensure_ascii=False),
              json.dumps(sonuc["etiketler"], ensure_ascii=False),

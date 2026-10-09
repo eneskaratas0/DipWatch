@@ -42,6 +42,14 @@ yeniden denenir. Ücretsiz kotayı korumak için Gemini/Groq ile diller arası b
 modeliyle yapılır (`DIPWATCH_LLM_BIRLESTIRME=1` ile LLM'e de açılabilir). Google ücretsiz katmandaki
 istekleri modellerini geliştirmek için kullanabilir; burada gönderilen yalnızca herkese açık haber başlıkları.
 
+**Son yedek: ücretsiz çeviri.** Hiç LLM anahtarı yoksa ya da hepsinin kotası dolduysa, özeti olmayan olaylarda
+temsilci haberin başlığı ve kısa açıklaması Türkçeye çevrilir (`collector/ceviri.py`). Servisler sırayla denenir,
+kota/engel gelen 1 saat dinlendirilip sıradakine geçilir: Google Translate (anahtarsız; sunuculardan sık engellenir,
+ev bağlantısında genelde çalışır), DeepL Free (`DEEPL_API_KEY` varsa, ayda 500.000 karakter), MyMemory (anahtarsız
+günde ~5.000 karakter; `.env`'ye `MYMEMORY_EMAIL=...` yazılırsa ~50.000). Olayın Türkçe haberi varsa çeviri
+yapılmaz, o haber kullanılır. Bu gerçek bir özet değildir (kaynakları karşılaştırmaz, bölge/önem vermez); sitede
+"makine çevirisi" notuyla gösterilir ve LLM yeniden çalışınca gerçek özetle değiştirilir. `DIPWATCH_CEVIRI=0` kapatır.
+
 Toplayıcı `.env` dosyasını kendisi okur. `.env` `.gitignore` içinde
 olduğu için GitHub'a gönderilmez; `git status` çıktısında görünmemesi gerekir.
 
@@ -117,6 +125,7 @@ kendiliğinden temizlenir; daha yeniyse ve eminsen elle silip tekrar deneyebilir
 | `DIPWATCH_GEMINI_MODEL` | `gemini-flash-lite-latest` | Gemini modeli (ücretsiz kotası en geniş olan Flash-Lite) |
 | `DIPWATCH_GROQ_MODEL` | `openai/gpt-oss-120b` | Groq modeli |
 | `DIPWATCH_LLM_BIRLESTIRME` | `0` | Gemini/Groq ile diller arası birleştirme (kota harcar) |
+| `DIPWATCH_CEVIRI` | `1` | `0` yapılırsa LLM yokken ücretsiz çeviri yedeği kapanır |
 | `DIPWATCH_EFOR` | `low` | düşünme eforu (low/medium/high) |
 | `DIPWATCH_OZET_MIN_KAYNAK` | `2` | kaç kaynaklı olaylar özetlensin |
 | `DIPWATCH_GOMME` | `1` | `0` yapılırsa gömme ile birleştirme kapanır |
