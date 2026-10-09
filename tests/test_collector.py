@@ -93,7 +93,7 @@ def ortam_kur(feeds=FEEDS):
     bolgeler = {}
     for anahtar, (ad, bolge, dil, _) in feeds.items():
         bolgeler.setdefault(bolge, []).append(
-            f'    - {{ad: {ad}, tur: x, dil: {dil}, yontem: rss, url: "file://{tmp}/{anahtar}.xml"}}')
+            f'    - {{ad: {ad}, tur: x, dil: {dil}, yontem: rss, url: "file://{tmp.as_posix()}/{anahtar}.xml"}}')
     for b, satirlar in bolgeler.items():
         src += [f"  {b}:"] + satirlar
     (tmp / "sources.yaml").write_text("\n".join(src), encoding="utf-8")

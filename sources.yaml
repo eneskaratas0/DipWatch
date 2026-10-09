@@ -43,7 +43,6 @@ bolgeler:
     - {ad: Iran International, ulke: İran, tur: yerel, dil: en, yontem: google_news, alan_adi: iranintl.com, durum: calisiyor}
     - {ad: L'Orient Today, ulke: Lübnan, tur: yerel, dil: en, yontem: google_news, alan_adi: lorientlejour.com, durum: calisiyor}
     - {ad: Rudaw, ulke: Irak (Kürt Bölgesi), tur: yerel, dil: en, yontem: google_news, alan_adi: rudaw.net, durum: calisiyor}
-    - {ad: Daily Sabah, ulke: Türkiye, tur: yerel, dil: en, yontem: google_news, alan_adi: dailysabah.com, durum: calisiyor}
 
   rusya_ukrayna_kafkasya:
     - {ad: Kyiv Independent, ulke: Ukrayna, tur: yerel, dil: en, yontem: rss, url: "https://kyivindependent.com/news-archive/rss/", durum: calisiyor}
@@ -84,6 +83,15 @@ bolgeler:
     - {ad: BBC US & Canada, tur: uluslararasi, dil: en, yontem: rss, url: "https://feeds.bbci.co.uk/news/world/us_and_canada/rss.xml", durum: calisiyor}
     - {ad: BBC Latin America, tur: uluslararasi, dil: en, yontem: rss, url: "https://feeds.bbci.co.uk/news/world/latin_america/rss.xml", durum: calisiyor}
     - {ad: MercoPress, ulke: Güney Amerika, tur: yerel, dil: en, yontem: rss, url: "https://en.mercopress.com/rss", durum: calisiyor}
+
+  turkiye:
+    - {ad: Daily Sabah, tur: yerel, dil: en, yontem: rss, url: "https://www.dailysabah.com/rss/turkey", durum: calisiyor}
+    - {ad: Hürriyet Daily News, tur: yerel, dil: en, yontem: rss, url: "https://www.hurriyetdailynews.com/rss/turkey", durum: calisiyor}
+    - {ad: Bianet English, tur: yerel, dil: en, yontem: rss, url: "https://bianet.org/english/rss", durum: calisiyor}
+    - {ad: TRT Haber Türkiye, tur: turkce, dil: tr, yontem: rss, url: "https://www.trthaber.com/turkiye_articles.rss", durum: calisiyor}
+    - {ad: Anadolu Ajansı Güncel, tur: turkce, dil: tr, yontem: rss, url: "https://www.aa.com.tr/tr/rss/default?cat=guncel", durum: calisiyor}
+    - {ad: NTV Gündem, tur: turkce, dil: tr, yontem: rss, url: "https://www.ntv.com.tr/gundem.rss", durum: calisiyor}
+    - {ad: Sözcü Gündem, tur: turkce, dil: tr, yontem: rss, url: "https://www.sozcu.com.tr/feeds-rss-category-gundem", durum: calisiyor}
 
   turkce:
     - {ad: Anadolu Ajansı Dünya, tur: turkce, dil: tr, yontem: rss, url: "https://www.aa.com.tr/tr/rss/default?cat=dunya", durum: calisiyor}
