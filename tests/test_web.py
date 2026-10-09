@@ -34,13 +34,21 @@ def calistir():
 
     assert olustur(girdi, cikti) == 2
     index = (cikti / "index.html").read_text(encoding="utf-8")
-    assert 'href="olay/1.html"' in index and "7 Ekim 2026, Çarşamba" in index and "5 Ekim 2026, Pazartesi" in index
-    assert "<script>alert" not in index, "başlık kaçışlanmamış"
+    # olay 1 (2 kaynaklı) ana sayfada; olay 2 (tek kaynaklı) performans için arşive taşınır
+    assert 'href="olay/1.html"' in index and "7 Ekim 2026, Çarşamba" in index
+    assert 'href="olay/2.html"' not in index and "5 Ekim 2026, Pazartesi" not in index
     assert not (cikti / "olay" / "999.html").exists()
+
+    tek = (cikti / "tek-kaynakli.html").read_text(encoding="utf-8")
+    assert 'href="olay/2.html"' in tek and "5 Ekim 2026, Pazartesi" in tek and 'href="olay/1.html"' not in tek
+    assert "<script>alert" not in tek, "başlık kaçışlanmamış"
 
     orta = (cikti / "bolge" / "orta_dogu.html").read_text(encoding="utf-8")
     assert "olay/1.html" in orta and "olay/2.html" not in orta
     assert (cikti / "bolge" / "turkiye.html").exists()  # boş bölgenin de sayfası olur
+    assert (cikti / "bolge" / "turkiye-tek.html").exists()
+    afrika_tek = (cikti / "bolge" / "afrika-tek.html").read_text(encoding="utf-8")
+    assert "olay/2.html" in afrika_tek
 
     olay = (cikti / "olay" / "1.html").read_text(encoding="utf-8")
     assert "Taraflar denetimlerin" in olay and "Zaman çizelgesi" in olay
