@@ -232,6 +232,53 @@ def bildir(con, ayar, bot=None, kurallar: Kurallar | None = None, bekleme: float
     return gonderilen
 
 
+def gecisleri_uygula(con, gecisler: dict[int, int]) -> int:
+    """`yeniden-grupla` sonrası bildirim takibini günceller. `gecisler`: her haberin yeniden
+    gruplamadan ÖNCEKİ olay_id'sinden o anda atandığı YENİ olay_id'ye eşleme (bkz. __main__.
+    yeniden_grupla). Her eski id'nin GERÇEK kökü (sonradan birleşmeler dahil) bulunur; o kökte
+    izlenen bir `bildirim` kaydı varsa kaynak_sayısı KÖKÜN GÜNCEL sayısına sıfırlanır, birden
+    fazla eski kayıt aynı köke düştüyse (olaylar birleşmiştir) tek kayda indirilir (mesaj_id'si
+    olan -- yani zaten bir Telegram mesajı gönderilmiş -- tercih edilir, büyüme mesajları ona yanıt
+    olarak gitsin). Aksi halde bir sonraki `dongu` turu, yeniden gruplamanın yol açtığı ani kaynak
+    sayısı sıçramasını organik "olay büyüyor" sanıp sahte bildirim gönderebilir -- ya da taban çok
+    yüksek kalıp gerçek bir büyüme hiç bildirilmez. Taşınan/güncellenen kayıt sayısını döndürür."""
+    if not gecisler:
+        return 0
+    con.executescript(SEMA)
+    kok = {eski: cluster.kok_olay(con, yeni) for eski, yeni in gecisler.items()}
+
+    izlenenler = {}
+    eskiler = list(kok)
+    for i in range(0, len(eskiler), 500):
+        parca = eskiler[i:i + 500]
+        for r in con.execute(
+                f"SELECT * FROM bildirim WHERE olay_id IN ({','.join('?' * len(parca))})", parca):
+            izlenenler[r["olay_id"]] = dict(r)
+    if not izlenenler:
+        return 0
+
+    gruplar: dict[int, list] = {}
+    for eski, yeni_kok in kok.items():
+        if eski in izlenenler:
+            gruplar.setdefault(yeni_kok, []).append(izlenenler[eski])
+
+    tasinan = 0
+    for yeni_kok, kayitlar in gruplar.items():
+        guncel = con.execute("SELECT kaynak_sayisi FROM olay WHERE id=?", (yeni_kok,)).fetchone()
+        if not guncel:
+            continue  # kök olay artık yok (olmamalı, ama veri bütünlüğü için koru)
+        secilen = sorted(kayitlar, key=lambda r: (r["mesaj_id"] is None, -(r["kaynak_sayisi"] or 0)))[0]
+        for r in kayitlar:
+            if r["olay_id"] != yeni_kok:
+                con.execute("DELETE FROM bildirim WHERE olay_id=?", (r["olay_id"],))
+        con.execute(
+            "INSERT OR REPLACE INTO bildirim (olay_id, kaynak_sayisi, mesaj_id, zaman) VALUES (?,?,?,?)",
+            (yeni_kok, guncel["kaynak_sayisi"], secilen["mesaj_id"], secilen["zaman"]))
+        tasinan += 1
+    con.commit()
+    return tasinan
+
+
 def chat_id_bul():
     """Bota son yazılan sohbetleri listeler (sohbet kimliğini bulmak için)."""
     token = os.environ.get("TELEGRAM_BOT_TOKEN", "")

@@ -7,6 +7,7 @@
   stil.css, filtre.js
 Linkler göreli olduğu için site hem dosyadan (file://) hem bir alt klasörden (GitHub Pages) açılır.
 """
+import base64
 import json
 import logging
 import shutil
@@ -37,6 +38,8 @@ AYLAR = ["Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran", "Temmuz", "Ağu
          "Kasım", "Aralık"]
 GUNLER = ["Pazartesi", "Salı", "Çarşamba", "Perşembe", "Cuma", "Cumartesi", "Pazar"]
 DILLER = {"tr": "TR", "en": "EN", "ar": "AR", "fr": "FR", "de": "DE", "ru": "RU", "fa": "FA", "he": "HE"}
+# "haber" için rozet gösterilmez (varsayılan, görsel gürültü eklemesin); bkz. collector/fetch.icerik_turu
+TUR_ETIKETLERI = {"analiz": "Analiz", "canli": "Canlı"}
 
 
 def zaman(s):
@@ -76,9 +79,20 @@ def guvenli_link(url):
 FONTLAR = ("https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,500;6..72,600"
           "&family=Public+Sans:wght@400;500;600&display=swap")
 
+# Mühür: --muhur rengiyle aynı, kâğıt zemin üstünde bir damga. Karanlık modu da izler.
+FAVICON_SVG = (
+    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">'
+    '<style>.p{fill:#f1f3f2}.i{fill:#1d4e89}'
+    '@media (prefers-color-scheme:dark){.p{fill:#141a21}.i{fill:#8db8ec}}</style>'
+    '<rect class="p" width="32" height="32" rx="6"/>'
+    '<circle class="i" cx="16" cy="16" r="9"/>'
+    '<circle class="p" cx="16" cy="16" r="4"/></svg>'
+)
+FAVICON_URI = "data:image/svg+xml;base64," + base64.b64encode(FAVICON_SVG.encode()).decode()
 
-def sayfa(baslik, govde, kok="", aciklama="DipWatch: uluslararası siyaset olay takibi", secili=None):
-    """secili: menüde işaretlenecek bölge anahtarı ('' = Tümü, None = hiçbiri)."""
+
+def sayfa(baslik, govde, kok="", aciklama="DipWatch: uluslararası siyaset olay takibi", secili=None, tur="website"):
+    """secili: menüde işaretlenecek bölge anahtarı ('' = Tümü, None = hiçbiri). tur: og:type."""
     e = escape
 
     def menu_linki(href, ad, anahtar):
@@ -95,6 +109,17 @@ def sayfa(baslik, govde, kok="", aciklama="DipWatch: uluslararası siyaset olay 
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{e(baslik)}</title>
 <meta name="description" content="{e(aciklama)}">
+<meta property="og:type" content="{tur}">
+<meta property="og:locale" content="tr_TR">
+<meta property="og:site_name" content="DipWatch">
+<meta property="og:title" content="{e(baslik)}">
+<meta property="og:description" content="{e(aciklama)}">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="{e(baslik)}">
+<meta name="twitter:description" content="{e(aciklama)}">
+<meta name="theme-color" content="#f1f3f2" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#141a21" media="(prefers-color-scheme: dark)">
+<link rel="icon" href="{FAVICON_URI}">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="{FONTLAR}">
@@ -120,13 +145,13 @@ def sayfa(baslik, govde, kok="", aciklama="DipWatch: uluslararası siyaset olay 
 """
 
 
-def olay_satiri(o, kok):
+def olay_satiri(o, kok, manset=False):
     e = escape
     son = zaman(o["son_haber"])
     b = e(o["bolge"])
     onem = f'<span class="onem">önem {o["onem"]}/5</span>' if o.get("onem") else ""
     ozet = f'<p class="ozet">{e(o["ozet"])}</p>' if o.get("ozet") else ""
-    sinif = f"olay b-{b}" + (" tek" if o["kaynak_sayisi"] < 2 else "")
+    sinif = f"olay b-{b}" + (" olay-manset" if manset else "") + (" tek" if o["kaynak_sayisi"] < 2 else "")
     return (f'<li class="{sinif}" data-ara="{e(arama_metni(o))}">'
             f'<div class="olay-govde">'
             f'<a class="baslik" href="{kok}olay/{o["id"]}.html">{e(o["baslik"])}</a>{ozet}'
@@ -184,8 +209,11 @@ def liste_sayfasi(baslik, olaylar, kok, olusturulma, secili, serit=False):
     gunler = gunlere_bol(olaylar)
     atla = "".join(f'<a href="#g{g.isoformat()}">{g.day} {AYLAR[g.month - 1]}</a>' for g, _ in gunler)
     bolumler = []
-    for g, liste in gunler:
-        satirlar = "".join(olay_satiri(o, kok) for o in liste)
+    for i, (g, liste) in enumerate(gunler):
+        # Ana sayfada en üstteki olay (en çok kaynaklı/en güncel) manşet gibi büyütülür.
+        satirlar = "".join(
+            olay_satiri(o, kok, manset=(serit and i == 0 and j == 0 and o["kaynak_sayisi"] >= 2))
+            for j, o in enumerate(liste))
         bolumler.append(f'<section class="gun" id="g{g.isoformat()}"><h2>{gun_adi(g)}</h2>'
                         f'<ol class="olaylar">{satirlar}</ol></section>')
     bos = ('<p class="bos">Bu bölgede son 72 saatte olay yok. Diğer bölgelere üstteki menüden bakabilirsin.</p>'
@@ -229,9 +257,11 @@ def olay_sayfasi(o, kok="../"):
             cizelge.append(f'<li class="cizelge-gun">{gun_adi(d.date())}</li>')
             onceki_gun = d.date()
         dil = DILLER.get(k.get("dil"), (k.get("dil") or "").upper())
+        tur = TUR_ETIKETLERI.get(k.get("tur"))
+        tur_html = f'<span class="dil" title="İçerik türü">{e(tur)}</span>' if tur else ""
         cizelge.append(
             f'<li><time>{saat_dk(d)}</time><div><span class="kaynak">{e(k["kaynak"])}</span>'
-            f'<span class="dil" title="Haberin dili">{e(dil)}</span>'
+            f'<span class="dil" title="Haberin dili">{e(dil)}</span>{tur_html}'
             f'<a href="{e(guvenli_link(k["link"]))}" rel="noopener noreferrer" target="_blank">{e(k["baslik"])}</a>'
             f'</div></li>')
 
@@ -263,7 +293,7 @@ def olay_sayfasi(o, kok="../"):
   <h2>Yayın kuruluşlarına göre kaynaklar</h2>
   <ul class="kaynaklar">{kaynak_listesi}</ul>
 </article>"""
-    return sayfa(f"{o['baslik']} | DipWatch", govde, kok, aciklama=(o.get("ozet") or o["baslik"])[:200])
+    return sayfa(f"{o['baslik']} | DipWatch", govde, kok, aciklama=(o.get("ozet") or o["baslik"])[:200], tur="article")
 
 
 def olustur(girdi: Path, cikti: Path) -> int:

@@ -83,6 +83,12 @@ footer { max-width: 920px; margin: 24px auto 40px; padding: 16px; color: var(--s
 .olay .baslik { font: 600 21px/1.3 var(--serif); color: var(--murekkep); text-decoration: none; }
 .olay .baslik:hover { color: var(--muhur); text-decoration: underline; text-decoration-thickness: 1px; }
 .olay .ozet { margin: 6px 0 0; max-width: 68ch; }
+
+/* Manşet: ana sayfada en üstteki (en çok kaynaklı/en güncel) olay, gazete önyüzü gibi büyütülür. */
+.olay-manset { border-left-width: 5px; padding-top: 18px; }
+.olay-manset .baslik { font-size: 26px; }
+.olay-manset .ozet { font-size: 16.5px; max-width: 72ch; }
+.olay-manset .yayilim .sayi { font-size: 34px; }
 .meta { display: flex; flex-wrap: wrap; gap: 4px 16px; margin-top: 8px; font-size: 14px; color: var(--soluk); }
 .bolge-adi { color: var(--b, var(--soluk)); font-weight: 600; text-decoration: none; }
 .bolge-adi:hover { text-decoration: underline; }
@@ -129,12 +135,16 @@ footer { max-width: 920px; margin: 24px auto 40px; padding: 16px; color: var(--s
 
 @media (max-width: 560px) {
   body { font-size: 16px; }
+  /* dar ekranda gizli kaydırma bölge adlarını keşfedilemez yapıyor: sekmeler plaka gibi sığdığı yere sarar */
+  .bolgeler { flex-wrap: wrap; overflow-x: visible; padding: 2px 8px 4px; }
   /* dar ekranda orantılı şerit okunmuyor: üç sütunlu kutulara dönüşür, adlar tam görünür */
   .serit-cubuk { flex-wrap: wrap; }
   .serit-parca { flex: 1 1 calc(33.33% - 3px) !important; min-height: 60px; }
   .olay { gap: 10px; padding-left: 12px; }
   .olay .baslik { font-size: 19px; }
   .yayilim .sayi { font-size: 22px; }
+  .olay-manset .baslik { font-size: 22px; }
+  .olay-manset .yayilim .sayi { font-size: 26px; }
   .cizelge li { grid-template-columns: 44px 1fr; gap: 10px; }
 }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }

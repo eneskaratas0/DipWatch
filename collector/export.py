@@ -1,20 +1,42 @@
 """Olayları 3. adımdaki site için JSON'a ve okunabilir bir Markdown özetine yazar."""
 import json
-from collections import Counter
+import re
 from datetime import datetime, timedelta, timezone
 
-COGRAFI_DEGIL = {"turkce", "analiz_ve_resmi", "kuresel"}
+from . import bolge
+
+try:
+    import numpy as np
+except ImportError:
+    np = None
+
+# Başlık olarak seçilmesin: bunlar olaya bağlı kalır (ve tür etiketi taşır) ama kalıp/özet niteliğinde,
+# gerçek gelişmeyi anlatmaz (bkz. fetch.icerik_turu).
+_TUR_CANLI = re.compile(r"-\s*live\b|^live[\s:]", re.IGNORECASE)
+_TUR_ANALIZ = re.compile(r"^(explainer|analysis|opinion|editorial)\b[\s:-]", re.IGNORECASE)
 
 
-def _bolge_tahmini(haberler):
-    c = Counter(h["bolge"] for h in haberler if h["bolge"] not in COGRAFI_DEGIL)
-    return c.most_common(1)[0][0] if c else "kuresel"
+def _duz_haber(h) -> bool:
+    b = h["baslik"].strip()
+    return not (_TUR_CANLI.search(b) or _TUR_ANALIZ.match(b))
 
 
 def _baslik_sec(haberler):
-    """Claude özeti yoksa: olayda Türkçe kaynak varsa onun en son başlığı, yoksa ilk haberin başlığı."""
-    turkce = [h for h in haberler if h["dil"] == "tr"]
-    return turkce[-1]["baslik"] if turkce else haberler[0]["baslik"]
+    """Claude özeti yoksa: kümenin merkez (gömme) vektörüne en yakın başlık seçilir -- "Explainer",
+    "... - live", "analysis" gibi kalıp başlıklar elenerek. Vektör yoksa (fastembed hiç çalışmadıysa)
+    en son Türkçe başlığa, o da yoksa ilk haberin başlığına düşülür. Eşitlikte/yakınlıkta Türkçe tercih edilir."""
+    adaylar = [h for h in haberler if _duz_haber(h)] or list(haberler)
+    vektorlu = [h for h in adaylar if h.get("vektor")] if np is not None else []
+    if len(vektorlu) >= 2:
+        vs = np.stack([np.frombuffer(h["vektor"], dtype=np.float32) for h in vektorlu])
+        merkez = vs.mean(axis=0)
+        benzerlik = vs @ merkez
+        en_yuksek = benzerlik.max()
+        en_yakinlar = [h for h, b in zip(vektorlu, benzerlik) if b >= en_yuksek - 1e-4]
+        turkce = [h for h in en_yakinlar if h["dil"] == "tr"]
+        return (turkce or en_yakinlar)[0]["baslik"]
+    turkce = [h for h in adaylar if h["dil"] == "tr"]
+    return turkce[-1]["baslik"] if turkce else adaylar[0]["baslik"]
 
 
 def olaylari_getir(con, saat: int):
@@ -24,21 +46,21 @@ def olaylari_getir(con, saat: int):
             """SELECT * FROM olay WHERE birlesti IS NULL AND haber_sayisi > 0 AND guncelleme >= ?
                ORDER BY COALESCE(onem, 0) DESC, kaynak_sayisi DESC, guncelleme DESC""", (sinir,)):
         haberler = [dict(r) for r in con.execute(
-            "SELECT kaynak, bolge, dil, baslik, link, yayin FROM haber WHERE olay_id=? ORDER BY yayin",
-            (o["id"],))]
+            """SELECT kaynak, bolge, dil, baslik, ozet, link, yayin, icerik_turu, vektor
+               FROM haber WHERE olay_id=? ORDER BY yayin""", (o["id"],))]
         sonuc.append({
             "id": o["id"],
             "baslik": o["tr_baslik"] or _baslik_sec(haberler),
             "ozet": o["tr_ozet"],
             "turkce_ozet_var": bool(o["tr_ozet"]),
-            "bolge": o["bolge"] or _bolge_tahmini(haberler),
+            "bolge": o["bolge"] or bolge.tahmin_et(haberler),
             "ulkeler": json.loads(o["ulkeler"]) if o["ulkeler"] else [],
             "etiketler": json.loads(o["etiketler"]) if o["etiketler"] else [],
             "onem": o["onem"],
             "ilk_haber": o["olusma"], "son_haber": o["guncelleme"],
             "kaynak_sayisi": o["kaynak_sayisi"],
             "kaynaklar": [{"kaynak": h["kaynak"], "baslik": h["baslik"], "link": h["link"],
-                           "dil": h["dil"], "yayin": h["yayin"]} for h in haberler],
+                           "dil": h["dil"], "yayin": h["yayin"], "tur": h["icerik_turu"]} for h in haberler],
         })
     return sonuc
 

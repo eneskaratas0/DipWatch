@@ -8,6 +8,8 @@ CREATE TABLE IF NOT EXISTS haber (
     link TEXT UNIQUE,
     kaynak TEXT, bolge TEXT, dil TEXT, tur TEXT,
     baslik TEXT, ozet TEXT,
+    baslik_norm TEXT,          -- küçük harf+noktalamasız başlık: aynı kaynaktan tekrarı yakalamak için
+    icerik_turu TEXT DEFAULT 'haber',  -- 'haber' | 'analiz' | 'canli', bkz. fetch.icerik_turu
     yayin TEXT,              -- ISO UTC
     eklenme TEXT,
     olay_id INTEGER REFERENCES olay(id),
@@ -46,4 +48,9 @@ def baglan(yol: Path) -> sqlite3.Connection:
     sutunlar = {r[1] for r in con.execute("PRAGMA table_info(haber)")}
     if "vektor" not in sutunlar:
         con.execute("ALTER TABLE haber ADD COLUMN vektor BLOB")
+    if "baslik_norm" not in sutunlar:
+        con.execute("ALTER TABLE haber ADD COLUMN baslik_norm TEXT")
+    if "icerik_turu" not in sutunlar:
+        con.execute("ALTER TABLE haber ADD COLUMN icerik_turu TEXT DEFAULT 'haber'")
+    con.execute("CREATE INDEX IF NOT EXISTS haber_kaynak_baslik ON haber(kaynak, baslik_norm)")
     return con

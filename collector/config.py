@@ -41,6 +41,7 @@ class Kaynak:
     dil: str = "en"
     ulke: str = ""
     yontem: str = "rss"
+    haric: tuple = ()  # bu kaynağa özel, haber sayılmayacak başlık kalıpları (regex, büyük/küçük harf duyarsız)
 
 
 @dataclass
@@ -62,7 +63,18 @@ class Ayarlar:
     gomme_birlestirme: bool = os.environ.get("DIPWATCH_GOMME", "1") != "0"
     gomme_modeli: str = os.environ.get("DIPWATCH_GOMME_MODELI",
                                        "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2")
-    gomme_esigi: float = float(os.environ.get("DIPWATCH_GOMME_ESIGI", "0.75"))
+    # 0.75'ten düşürülmesi denendi (0.70): gerçek verideki bazı yakın-tekrarları yakalıyordu ama
+    # "periyodik birleştirme" (tüm aktif olaylara her turda bakma) ile birleştirilen bir olayın
+    # merkez vektörü genelleşip büyüyünce, Houthi/Yemen ya da Nobel gibi geniş ortak konulu
+    # haberleri de kendine çekerek 100+ habere varan sahte mega-olaylar oluşturuyordu (ör. "Nobel
+    # Edebiyat" açıklayıcı yazısı "Nobel Barış" olayına katılıyordu). 0.85, gerçek tekrarları
+    # (Kimya Nobeli TR/EN 0.83, Trump'ın "ödülü hak ediyorum" haberleri 0.84-0.90) yakalarken bu
+    # kümelenmeyi gözlemlenebilir şekilde durduruyor.
+    gomme_esigi: float = float(os.environ.get("DIPWATCH_GOMME_ESIGI", "0.85"))
+    # Birleştirme adayları için bakılacak pencere; olay_penceresi_saat'ten (yeni haber kabulü) ayrı
+    # tutulur ve daha geniştir: durgunlaşmış ama hâlâ yakın zamanlı yinelenen olaylar (ör. aynı konunun
+    # TR ve EN haberlerinin birbirinden saatler sonra açılması) da değerlendirilsin.
+    gomme_birlestirme_penceresi_saat: int = int(os.environ.get("DIPWATCH_GOMME_PENCERE_SAAT", "72"))
     # Çekme
     zaman_asimi: int = 20
     paralel: int = 16
@@ -80,5 +92,5 @@ def kaynaklari_yukle(yol: Path, kapalilar: bool = False) -> list[Kaynak]:
             url = s.get("url") or google_news_url(s["alan_adi"], s.get("dil", "en"), s.get("gn_sure", "1d"))
             sonuc.append(Kaynak(ad=s["ad"], bolge=bolge, url=url, tur=s.get("tur", ""),
                                 dil=s.get("dil", "en"), ulke=s.get("ulke", ""),
-                                yontem=s.get("yontem", "rss")))
+                                yontem=s.get("yontem", "rss"), haric=tuple(s.get("haric") or ())))
     return sonuc

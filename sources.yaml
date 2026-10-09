@@ -35,7 +35,8 @@ bolgeler:
     - {ad: Times of Israel, ulke: İsrail, tur: yerel, dil: en, yontem: google_news, alan_adi: timesofisrael.com, durum: calisiyor}
     - {ad: Haaretz, ulke: İsrail, tur: yerel, dil: en, yontem: google_news, alan_adi: haaretz.com, durum: calisiyor}
     - {ad: Jerusalem Post, ulke: İsrail, tur: yerel, dil: en, yontem: rss, url: "https://www.jpost.com/rss/rssfeedsfrontpage.aspx", durum: calisiyor}
-    - {ad: Arab News, ulke: Suudi Arabistan, tur: yerel, dil: en, yontem: google_news, alan_adi: arabnews.com, durum: calisiyor}
+    - {ad: Arab News, ulke: Suudi Arabistan, tur: yerel, dil: en, yontem: google_news, alan_adi: arabnews.com, durum: calisiyor,
+       haric: ["careers at arab news", "ARAB NEWS TEAM"]}
     - {ad: Asharq Al-Awsat English, ulke: Suudi Arabistan, tur: yerel, dil: en, yontem: google_news, alan_adi: english.aawsat.com, durum: calisiyor}
     - {ad: Al Arabiya English, ulke: BAE, tur: yerel, dil: en, yontem: google_news, alan_adi: english.alarabiya.net, durum: calisiyor}
     - {ad: The National, ulke: BAE, tur: yerel, dil: en, yontem: google_news, alan_adi: thenationalnews.com, durum: calisiyor}
