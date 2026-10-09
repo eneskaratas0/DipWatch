@@ -36,7 +36,7 @@ olduğu için GitHub'a gönderilmez; `git status` çıktısında görünmemesi g
 
 ## Nasıl çalışır
 
-1. **Çekme**: 68 besleme paralel çekilir. Google News üzerinden gelenlerde başlıktaki " - Yayın" eki temizlenir.
+1. **Çekme**: 74 besleme paralel çekilir. Google News üzerinden gelenlerde başlıktaki " - Yayın" eki temizlenir.
    Linkler izleme parametrelerinden arındırılır, aynı link ikinci kez eklenmez.
 2. **Gruplama**: başlık + açıklama TF-IDF vektörüne çevrilir; son 36 saatte güncellenen bir olayla
    benzerlik 0.28'i geçerse o olaya eklenir, geçmezse yeni olay açılır (`config.py` içinden ayarlanır).
@@ -48,6 +48,11 @@ olduğu için GitHub'a gönderilmez; `git status` çıktısında görünmemesi g
 4. **Türkçe özet** (Claude anahtarı gerekir): en az 2 farklı kaynağı olan ve yeni haber almış olaylar özetlenir (tur başına en fazla 40).
    Özet; başlık, 2-4 cümle, bölge, ülkeler, etiketler ve 1-5 önem puanı içerir. Kaynaklar çelişiyorsa özette belirtilir.
    Anahtar yoksa olay başlığı olarak varsa Türkçe bir kaynağın başlığı, yoksa ilk haberin başlığı kullanılır.
+5. **Bölge**: Claude varsa olaya atadığı bölge kullanılır; yoksa kaynakların en sık geçtiği grup tahmin edilir
+   (`turkce`, `analiz_ve_resmi` ve `kuresel` grupları coğrafi sayılmaz, bu durumda `kuresel`e düşer). Türkiye
+   gündemi için `sources.yaml`'da ayrı bir `turkiye` kaynak grubu var (Daily Sabah, Hürriyet Daily News, Bianet
+   English, TRT Haber Türkiye, Anadolu Ajansı Güncel, NTV Gündem, Sözcü Gündem); bu sayede Türkiye bölgesi
+   Claude anahtarı olmadan da doğru dolar.
 
 ## Ayarlar (ortam değişkenleri)
 
