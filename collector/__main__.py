@@ -35,6 +35,7 @@ def _db_kilidi(ayar: Ayarlar):
     seferlik `tur`/`yeniden-grupla` çalıştırmalarında hata açıkça görünür. 30 dakikadan eski bir
     kilit, çökmüş bir süreçten kalmış sayılıp kendiliğinden temizlenir."""
     kilit_yolu = ayar.veritabani.with_name(ayar.veritabani.name + ".lock")
+    kilit_yolu.parent.mkdir(parents=True, exist_ok=True)  # ilk çalıştırmada data/ henüz yok
     try:
         if kilit_yolu.exists() and time.time() - kilit_yolu.stat().st_mtime > _KILIT_ESKI_SANIYE:
             log.warning("eski kilit dosyası (%s) temizlendi: önceki çalışma çökmüş olabilir", kilit_yolu)
