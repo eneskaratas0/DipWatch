@@ -1,0 +1,78 @@
+# DipWatch'ı GitHub'ın ücretsiz sunucularında çalıştırır: her 30 dakikada bir haberleri toplar,
+# siteyi yeniden oluşturur ve gh-pages dalına yayınlar (GitHub Pages). Telegram bildirimleri de
+# aynı turda gider. Anahtarlar Settings > Secrets and variables > Actions altında tutulur, koda girmez.
+name: Topla ve yayınla
+
+on:
+  schedule:
+    - cron: "*/30 * * * *"
+  workflow_dispatch:
+  push:
+    branches: [main, claude/project-thread-55b092]
+
+permissions:
+  contents: write
+
+# Aynı veritabanı üzerinde iki tur aynı anda çalışmasın; bekleyen tur sıradakini iptal etmez.
+concurrency:
+  group: dipwatch-yayin
+  cancel-in-progress: false
+
+jobs:
+  tur:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      FASTEMBED_CACHE_PATH: ${{ github.workspace }}/.fastembed
+      GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+      GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      DEEPL_API_KEY: ${{ secrets.DEEPL_API_KEY }}
+      MYMEMORY_EMAIL: ${{ secrets.MYMEMORY_EMAIL }}
+      TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+      TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - run: pip install -r requirements.txt
+
+      # Gömme modeli (~220 MB) her turda yeniden indirilmesin.
+      - uses: actions/cache@v4
+        with:
+          path: .fastembed
+          key: fastembed-${{ hashFiles('collector/config.py') }}
+
+      # Veritabanı turlar arasında önbellekte taşınır: her tur bir öncekinin kaydını açar, sonunda yenisini yazar.
+      - uses: actions/cache/restore@v4
+        with:
+          path: data
+          key: dipwatch-db-${{ github.run_id }}
+          restore-keys: dipwatch-db-
+
+      - name: Tur (topla, grupla, özetle, bildir) ve siteyi oluştur
+        run: python -m collector tur --site public
+
+      # Yarıda kalan bir turun kilidi bir sonraki tura taşınmasın.
+      - run: rm -f data/*.lock
+        if: always()
+
+      - uses: actions/cache/save@v4
+        if: always() && hashFiles('data/dipwatch.db') != ''
+        with:
+          path: data
+          key: dipwatch-db-${{ github.run_id }}-${{ github.run_attempt }}
+
+      - name: gh-pages dalına yayınla
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: public
+          force_orphan: true
+          user_name: github-actions[bot]
+          user_email: github-actions[bot]@users.noreply.github.com
+          commit_message: "Siteyi güncelle"
