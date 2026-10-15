@@ -8,7 +8,7 @@ on:
     - cron: "*/30 * * * *"
   workflow_dispatch:
   push:
-    branches: [main, claude/project-thread-55b092]
+    branches: [main]
 
 permissions:
   contents: write

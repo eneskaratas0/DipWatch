@@ -214,6 +214,19 @@ başlatmak gerekmez.
 **İlk çalıştırma**: son 72 saatin yüzlerce olayını birden göndermemek için ilk turda yalnızca "bildirimler açıldı"
 mesajı gelir ve o anki olaylar görüldü sayılır. Bundan sonra çıkan yeni ve büyüyen olaylar bildirilir.
 
+## Yayın (GitHub Actions + GitHub Pages)
+
+Site ücretsiz olarak https://eneskaratas0.github.io/DipWatch/ adresinde yayınlanır. `.github/workflows/yayin.yml`
+her 30 dakikada bir GitHub'ın sunucusunda bir tur çalıştırır (`python -m collector tur --site public`) ve oluşan
+siteyi `gh-pages` dalına koyar. Veritabanı turlar arasında Actions önbelleğinde taşınır. Elle çalıştırmak için:
+Actions > "Topla ve yayınla" > Run workflow.
+
+- **İlk kurulum (bir kez)**: Settings > Pages > Build and deployment > Source: "Deploy from a branch", Branch: `gh-pages`, `/ (root)`, Save.
+- **Anahtarlar**: `.env` yerine Settings > Secrets and variables > Actions > New repository secret. Aynı adlar kullanılır:
+  `GEMINI_API_KEY`, `GROQ_API_KEY`, `ANTHROPIC_API_KEY`, `DEEPL_API_KEY`, `MYMEMORY_EMAIL`, `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID`.
+  Hiçbiri zorunlu değil; yoksa ilgili adım atlanır.
+- GitHub, 60 gün boyunca depoda hiç değişiklik olmazsa zamanlanmış iş akışlarını durdurur; Actions sekmesinden yeniden açılır.
+
 ## Güvenlik
 
 Proje, [OWASP Top 10](https://owasp.org/www-project-top-ten/) esas alınarak tarandı; sonuçlar
