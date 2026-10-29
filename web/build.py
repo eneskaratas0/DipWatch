@@ -154,6 +154,9 @@ def sayfa(baslik, govde, kok="", aciklama="DipWatch: uluslararası siyaset olay 
 </main>
 <footer>Başlıklar ve linkler kaynakların kendisine aittir. DipWatch haberleri otomatik toplar ve gruplar.
 Özetler hata içerebilir; bir bilgiyi kullanmadan önce kaynağına bakın.</footer>
+<a class="basa-don" href="#" aria-label="Sayfanın başına dön" title="Başa dön">
+  <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" focusable="false"><path d="M12 19V5M5 12l7-7 7 7" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+</a>
 <script src="{kok}filtre.js"></script>
 </body>
 </html>
