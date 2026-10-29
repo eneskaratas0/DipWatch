@@ -1,4 +1,4 @@
-// Liste sayfalarında arama + "/" kısayolu + göreli zaman + olay sayfasında dil filtresi.
+// Liste sayfalarında arama + "/" kısayolu + göreli zaman + olay sayfasında dil filtresi + başa dön düğmesi.
 // JS kapalıysa: arama kutusu/dil filtresi görünmez ama sayfa eksiksiz kalır, saatler kesin kalır.
 (function () {
   "use strict";
@@ -62,6 +62,32 @@
       if (dolu) return;
       ev.preventDefault();
       ara.focus();
+    });
+  }
+
+  // Başa dön: bir ekran boyu aşağı inilince belirir; tıklayınca yumuşakça başa kayar (hareket azaltma
+  // tercihinde anında), klavye kullanıcısının yeri kaybolmasın diye odak logoya taşınır.
+  var basaDon = document.querySelector(".basa-don");
+  if (basaDon) {
+    var bekliyor = false;
+    function guncelle() {
+      bekliyor = false;
+      basaDon.classList.toggle("kapali", window.scrollY < window.innerHeight * 0.8);
+    }
+    // ilk durum animasyonsuz uygulanır, yoksa sayfa açılırken düğme bir an görünüp söner
+    basaDon.style.transition = "none";
+    guncelle();
+    void basaDon.offsetWidth;
+    basaDon.style.transition = "";
+    window.addEventListener("scroll", function () {
+      if (!bekliyor) { bekliyor = true; window.requestAnimationFrame(guncelle); }
+    }, { passive: true });
+    basaDon.addEventListener("click", function (ev) {
+      ev.preventDefault();
+      var azHareket = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      window.scrollTo({ top: 0, behavior: azHareket ? "auto" : "smooth" });
+      var logo = document.querySelector(".logo");
+      if (logo) logo.focus({ preventScroll: true });
     });
   }
 

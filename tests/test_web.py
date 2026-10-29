@@ -52,6 +52,8 @@ def calistir():
 
     olay = (cikti / "olay" / "1.html").read_text(encoding="utf-8")
     assert "Taraflar denetimlerin" in olay and "Zaman çizelgesi" in olay
+    # başa dön düğmesi her sayfada, JS'siz de çalışan düz bir link olarak
+    assert all('class="basa-don" href="#"' in s for s in (index, orta, olay))
     assert olay.index("ornek.test/bbc/1") < olay.index("ornek.test/aa/1")  # zaman sırası
     assert "7 Ekim 00:30" in olay, "İstanbul saatine çevrilmemiş"  # 21:30 UTC = 00:30 TSİ
     assert 'href="../stil.css"' in olay
