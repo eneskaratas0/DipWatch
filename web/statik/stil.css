@@ -40,8 +40,10 @@ h1, h2, h3 { font-family: var(--serif); font-weight: 600; line-height: 1.2; }
 .masa-ic { max-width: 920px; margin: 0 auto; padding: 18px 16px 6px; display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 14px; }
 .logo { font: 600 30px/1 var(--serif); color: var(--murekkep); text-decoration: none; letter-spacing: -0.01em; }
 .masa-alt { color: var(--soluk); font-size: 15px; }
-.bolgeler { max-width: 920px; margin: 0 auto; padding: 0 8px; display: flex; overflow-x: auto; scrollbar-width: thin; }
-.bolgeler a { flex: none; display: flex; align-items: center; min-height: 44px; padding: 0 8px; font-size: 15px;
+/* Menü yatay kaydırma yerine sığmayan sekmeleri alt satıra sarar: kaydırma çubuğu hem çirkin görünüyordu hem de
+   sağda kalan sekmeleri (ör. "Teknoloji & Siber") gizliyordu. Masaüstünde (920px) tek satıra sığacak kadar sıkı. */
+.bolgeler { max-width: 920px; margin: 0 auto; padding: 0 8px; display: flex; flex-wrap: wrap; }
+.bolgeler a { flex: none; display: flex; align-items: center; min-height: 44px; padding: 0 7px; font-size: 15px;
   color: var(--soluk); text-decoration: none; border-bottom: 3px solid transparent; transition: color .15s, border-color .15s; }
 .bolgeler a:hover { color: var(--murekkep); border-bottom-color: var(--b, var(--murekkep)); }
 .bolgeler a[aria-current] { color: var(--murekkep); font-weight: 600; border-bottom-color: var(--b, var(--murekkep)); }
@@ -168,7 +170,7 @@ footer { max-width: 920px; margin: 24px auto 40px; padding: 16px; color: var(--s
 .kaynaklar ul li { margin: 3px 0; overflow-wrap: anywhere; font-size: 15px; }
 
 /* Teknoloji ve siber güvenlik sayfası (web/teknoloji.py). Renk burada bölgeyi değil kategoriyi gösterir. */
-.menu-ayrac { flex: none; width: 1px; margin: 12px 6px; background: var(--cizgi); }
+.menu-ayrac { flex: none; width: 1px; margin: 12px 3px; background: var(--cizgi); }
 .k-siber_guvenlik { --k: var(--k-siber); } .k-teknoloji { --k: var(--k-tekno); }
 .tekno-araclar .ara-kutu { flex-basis: 100%; }
 .tekno-araclar .tekno-kategori { margin: 0; }
@@ -199,7 +201,7 @@ footer { max-width: 920px; margin: 24px auto 40px; padding: 16px; color: var(--s
 @media (max-width: 560px) {
   body { font-size: 16px; }
   /* dar ekranda gizli kaydırma bölge adlarını keşfedilemez yapıyor: sekmeler plaka gibi sığdığı yere sarar */
-  .bolgeler { flex-wrap: wrap; overflow-x: visible; padding: 2px 8px 4px; }
+  .bolgeler { padding: 2px 8px 4px; }
   /* dar ekranda orantılı şerit okunmuyor: üç sütunlu kutulara dönüşür, adlar tam görünür */
   .serit-cubuk { flex-wrap: wrap; }
   .serit-parca { flex: 1 1 calc(33.33% - 3px) !important; min-height: 60px; }
