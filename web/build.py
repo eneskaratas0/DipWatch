@@ -4,6 +4,7 @@
   index.html            tüm olaylar, güne göre gruplu
   bolge/<bolge>.html    bir bölgenin olayları, güne göre gruplu
   olay/<id>.html        olay sayfası: özet/başlık, zaman çizelgesi, tüm kaynak linkleri
+  teknoloji.html        teknoloji ve siber güvenlik haberleri (events.json'un yanındaki teknoloji.json'dan)
   stil.css, filtre.js
 Linkler göreli olduğu için site hem dosyadan (file://) hem bir alt klasörden (GitHub Pages) açılır.
 """
@@ -110,13 +111,17 @@ def sayfa(baslik, govde, kok="", aciklama="DipWatch: uluslararası siyaset olay 
     """secili: menüde işaretlenecek bölge anahtarı ('' = Tümü, None = hiçbiri). tur: og:type."""
     e = escape
 
-    def menu_linki(href, ad, anahtar):
+    def menu_linki(href, ad, anahtar, renk=None):
         isaret = ' aria-current="page"' if anahtar == secili else ""
-        sinif = f' class="b-{anahtar}"' if anahtar else ""
+        renk = renk or anahtar
+        sinif = f' class="b-{renk}"' if renk else ""
         return f'<a href="{href}"{sinif}{isaret}>{e(ad)}</a>'
 
     menu = menu_linki(f"{kok}index.html", "Tümü", "") + "".join(
         menu_linki(f"{kok}bolge/{b}.html", ad, b) for b, ad in BOLGE_ADLARI.items())
+    # Bölge değil ayrı bir bölüm (bkz. web/teknoloji.py): menüde bir ayraçla bölgelerden ayrılır.
+    menu += '<span class="menu-ayrac" aria-hidden="true"></span>' + menu_linki(
+        f"{kok}teknoloji.html", "Teknoloji & Siber", "teknoloji", renk="tekno")
     return f"""<!doctype html>
 <html lang="tr">
 <head>
@@ -497,6 +502,9 @@ def olustur(girdi: Path, cikti: Path) -> int:
             encoding="utf-8")
     for o in olaylar:
         (cikti / "olay" / f"{o['id']}.html").write_text(olay_sayfasi(o), encoding="utf-8")
+
+    from .teknoloji import yaz as teknoloji_yaz
+    teknoloji_yaz(girdi.with_name("teknoloji.json"), cikti)
 
     log.info("site oluşturuldu: %s · %d olay · %d bölge", cikti, len(olaylar), len(bolgeye_gore))
     return len(olaylar)

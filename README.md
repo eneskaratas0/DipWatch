@@ -58,6 +58,7 @@ olduğu için GitHub'a gönderilmez; `git status` çıktısında görünmemesi g
 - `dipwatch.db`: SQLite (haber, olay, feed_durum tabloları)
 - `events.json`: son 72 saatin olayları; 3. adımdaki site bunu okuyacak
 - `son_olaylar.md`: aynı listenin okunabilir hâli
+- `teknoloji.json`: teknoloji ve siber güvenlik haberleri (bkz. "Teknoloji ve siber güvenlik bölümü")
 
 ## Nasıl çalışır
 
@@ -213,6 +214,42 @@ başlatmak gerekmez.
 
 **İlk çalıştırma**: son 72 saatin yüzlerce olayını birden göndermemek için ilk turda yalnızca "bildirimler açıldı"
 mesajı gelir ve o anki olaylar görüldü sayılır. Bundan sonra çıkan yeni ve büyüyen olaylar bildirilir.
+
+## Teknoloji ve siber güvenlik bölümü
+
+Dünya genelindeki teknoloji ve siber güvenlik haberlerini toplayan ayrı bir modül (`teknoloji/`). Ana toplayıcıdan
+bağımsız çalışır; sitede menünün sonundaki **Teknoloji & Siber** sayfasında (`teknoloji.html`) görünür.
+
+```bash
+python -m teknoloji tur                  # bir kez çek, tekrarları ayıkla, data/teknoloji.json yaz
+python -m teknoloji tur --site           # ayrıca public/teknoloji.html sayfasını yeniden oluştur
+python -m teknoloji dongu --aralik 3600  # her saat bir tur
+python -m teknoloji durum                # hangi kaynak çalışıyor, hangi yöntemle
+python -m tests.test_teknoloji           # ağsız test (sahte beslemeler + sahte HTML)
+```
+
+- **Kaynaklar** (`teknoloji/kaynaklar.yaml`): The Hacker News, BleepingComputer, Krebs on Security, The Record,
+  CISA, Ars Technica. Önce kaynağın RSS'i denenir; çalışmazsa sırayla `yedekler` (sayfa kazıma: liste sayfasındaki
+  haber linkleri, ya da Google News "site:" sorgusu). CISA'nın kendi RSS'i ve sayfası bulut sunucularından 403
+  verdiği için CISA şu an Google News üzerinden geliyor; GitHub'ın sunucularında RSS çalışırsa kendiliğinden ona döner.
+  Yeni kaynak eklemek için listeye bir satır yazmak yeterli.
+- **Her haber için**: başlık, kaynak, yayın tarihi, link (izleme parametreleri temizlenmiş), kısa özet (beslemedeki
+  açıklamanın ilk ~280 karakteri, kaynağın dilinde) ve kategori (`teknoloji` / `siber_guvenlik`).
+- **Kategori**: CISA, Krebs, The Hacker News, The Record'un tüm haberleri siber güvenlik sayılır. Karışık yayın yapan
+  BleepingComputer ve Ars Technica'da beslemenin kendi bölüm etiketine ("Security") bakılır; etiket yoksa başlık ve
+  özetteki kelimelere (ransomware, CVE, breach, zero-day…; "national security" sayılmaz).
+- **Tekrar ayıklama**: aynı link bir kez eklenir; son 48 saatte başka bir kaynaktan aynı başlık ya da çok benzer başlık
+  (ortak kelime oranı, en az ikisi "flaw/patch/security" gibi genel kelimeler dışında) gelirse yeni haber açılmaz, ilk
+  yayımlayan kaynağın altına "Ayrıca: …" olarak eklenir. fastembed kuruluysa (ana toplayıcının gömme modeli) farklı
+  kelimelerle yazılmış aynı haber de yakalanır. Kelime yöntemi tek başına "Binance probes potential $5.8 billion hack"
+  ile "Binance suffers security breach affecting $6.3 billion" gibi çok farklı yazılmış başlıkları kaçırabilir.
+- **Sıralama ve filtre**: en yeni en üstte, günlere bölünmüş (İstanbul saati). Kategori düğmeleri, kaynak seçimi ve
+  arama kutusu birlikte çalışır; seçim adres çubuğuna yazılır (`teknoloji.html?kategori=siber_guvenlik&kaynak=CISA`).
+  Sitede son 7 günün haberleri görünür.
+- **Depolama**: ana toplayıcıyla aynı SQLite dosyası (`data/dipwatch.db`), ayrı tablolar: `tekno_haber` (haberler),
+  `tekno_tekrar` (tekrar sayılan linkler), `tekno_kaynak_durum` (kaynak sağlığı). Site için `data/teknoloji.json`.
+- **Güncelleme**: GitHub Actions'taki 30 dakikalık turda ana toplayıcıdan hemen önce çalışır (yani saatte iki kez).
+  Hata verirse ana tur ve yayın etkilenmez.
 
 ## Yayın (GitHub Actions + GitHub Pages)
 

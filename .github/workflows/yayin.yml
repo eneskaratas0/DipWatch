@@ -54,6 +54,13 @@ jobs:
           key: dipwatch-db-${{ github.run_id }}
           restore-keys: dipwatch-db-
 
+      # Teknoloji ve siber güvenlik bölümü (teknoloji/): ana turdan önce çalışır ki site oluşturulurken
+      # data/teknoloji.json hazır olsun. Hata verse de ana tur ve yayın yine çalışır.
+      - name: Teknoloji ve siber güvenlik haberleri
+        run: python -m teknoloji tur
+        continue-on-error: true
+        timeout-minutes: 5
+
       - name: Tur (topla, grupla, özetle, bildir) ve siteyi oluştur
         run: python -m collector tur --site public
 
