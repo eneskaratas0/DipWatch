@@ -91,6 +91,71 @@
     });
   }
 
+  // Teknoloji sayfası: kategori düğmeleri + kaynak seçimi + arama birlikte uygulanır. Seçim adres
+  // çubuğuna yazılır (?kategori=...&kaynak=...&q=...), böylece filtrelenmiş görünüm paylaşılabilir.
+  var teknoAraclar = document.querySelector(".tekno-araclar");
+  if (teknoAraclar) {
+    teknoAraclar.hidden = false; // JS kapalıysa filtreler gizli kalır, tüm haberler görünür
+    var tAra = document.getElementById("tekno-ara");
+    var tKaynak = document.getElementById("tekno-kaynak");
+    var tDugmeler = teknoAraclar.querySelectorAll("button[data-kategori]");
+    var tSonuc = document.getElementById("sonuc-sayisi");
+    var tYok = document.getElementById("sonuc-yok");
+    var tKategori = "";
+    var tZaman = null;
+
+    var p = new URLSearchParams(window.location.search);
+    tKategori = p.get("kategori") || "";
+    if (p.get("kaynak")) tKaynak.value = p.get("kaynak");
+    if (tKaynak.selectedIndex < 0) tKaynak.value = "";
+    if (p.get("q")) tAra.value = p.get("q");
+
+    function teknoUygula() {
+      tDugmeler.forEach(function (b) { b.setAttribute("aria-pressed", b.dataset.kategori === tKategori ? "true" : "false"); });
+      var q = tAra.value.trim().toLowerCase().replace(/̇/g, "").replace(/ı/g, "i");
+      var kaynak = tKaynak.value;
+      var gorunen = 0;
+      document.querySelectorAll("section.gun").forEach(function (gun) {
+        var n = 0;
+        gun.querySelectorAll("li.tekno-haber").forEach(function (li) {
+          var uyar = (!tKategori || li.dataset.kategori === tKategori) &&
+                     (!kaynak || li.dataset.kaynak === kaynak) &&
+                     (!q || li.dataset.ara.indexOf(q) !== -1);
+          li.hidden = !uyar;
+          if (uyar) n++;
+        });
+        gun.hidden = n === 0;
+        gorunen += n;
+      });
+      var filtreli = !!(tKategori || kaynak || q);
+      if (tYok) tYok.hidden = gorunen > 0 || !filtreli;
+      if (tSonuc) {
+        clearTimeout(tZaman);
+        tZaman = setTimeout(function () { tSonuc.textContent = filtreli ? gorunen + " haber bulundu" : ""; }, 350);
+      }
+      var yeni = new URLSearchParams();
+      if (tKategori) yeni.set("kategori", tKategori);
+      if (kaynak) yeni.set("kaynak", kaynak);
+      if (q) yeni.set("q", tAra.value.trim());
+      var s = yeni.toString();
+      try { history.replaceState(null, "", window.location.pathname + (s ? "?" + s : "")); } catch (e) { /* file:// */ }
+    }
+    tDugmeler.forEach(function (b) {
+      b.addEventListener("click", function () { tKategori = b.dataset.kategori; teknoUygula(); });
+    });
+    tKaynak.addEventListener("change", teknoUygula);
+    tAra.addEventListener("input", teknoUygula);
+    teknoUygula();
+
+    document.addEventListener("keydown", function (ev) {
+      if (ev.key !== "/" || ev.metaKey || ev.ctrlKey || ev.altKey) return;
+      var h = ev.target;
+      if (h && (h.tagName === "INPUT" || h.tagName === "TEXTAREA" || h.tagName === "SELECT" || h.isContentEditable)) return;
+      ev.preventDefault();
+      tAra.focus();
+    });
+  }
+
   // Olay sayfası: zaman çizelgesinde dil filtresi (Tümü / TR / EN)
   var dilDugmeleri = document.querySelectorAll(".dil-filtre button");
   if (dilDugmeleri.length) {

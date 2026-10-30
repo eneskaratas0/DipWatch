@@ -1,0 +1,34 @@
+# DipWatch teknoloji ve siber güvenlik kaynakları (bkz. teknoloji/__init__.py)
+#
+# Alanlar:
+#   kategori: siber_guvenlik -> kaynağın tüm haberleri siber güvenlik sayılır
+#             teknoloji      -> tüm haberleri teknoloji sayılır
+#             otomatik       -> haber başına karar verilir: beslemede bölüm etiketi varsa ona bakılır
+#                               ("Security" -> siber_guvenlik), yoksa başlık/özetteki anahtar kelimelere
+#                               (ransomware, CVE, breach...); hiçbiri değilse teknoloji
+#   url:      kaynağın kendi RSS/Atom beslemesi (ilk denenen yöntem)
+#   yedekler: (isteğe bağlı) RSS hata verirse ya da boş dönerse sırayla denenen yöntemler:
+#             {yontem: kazi, url: <liste sayfası>, link_deseni: <haber linklerine uyan regex>}
+#                 -> sayfadaki <a> etiketlerinden link_deseni'ne uyanlar haber sayılır (RSS yoksa)
+#             {yontem: google_news, alan_adi: <alan/yol>, gn_sure: 7d}
+#                 -> Google News RSS "site:" sorgusu (ana toplayıcıdaki ile aynı)
+#   haric:    (isteğe bağlı) haber sayılmayacak başlık kalıpları (regex)
+#   durum: kapali -> kaynak atlanır
+#
+# 2026-10-30 testi: CISA'nın kendi RSS'i ve sayfası bot korumasıyla 403 veriyor (bulut sunucularından);
+# bu yüzden önce RSS, sonra sayfa kazıma, en son Google News deneniyor. Diğer beslemeler doğrudan çalışıyor.
+
+kaynaklar:
+  - {ad: The Hacker News, kategori: siber_guvenlik, url: "https://feeds.feedburner.com/TheHackersNews"}
+  - {ad: BleepingComputer, kategori: otomatik, url: "https://www.bleepingcomputer.com/feed/"}
+  - {ad: Krebs on Security, kategori: siber_guvenlik, url: "https://krebsonsecurity.com/feed/"}
+  - {ad: The Record, kategori: siber_guvenlik, url: "https://therecord.media/feed"}
+  - ad: CISA
+    kategori: siber_guvenlik
+    url: "https://www.cisa.gov/cybersecurity-advisories/all.xml"
+    yedekler:
+      - {yontem: kazi, url: "https://www.cisa.gov/news-events/cybersecurity-advisories",
+         link_deseni: "/news-events/(cybersecurity-advisories|alerts|ics-advisories)/[^/?#]+$"}
+      - {yontem: google_news, alan_adi: cisa.gov/news-events, gn_sure: 7d}
+    haric: ["^News & Events$", "^Resources$", "Workshop", "Tabletop Exercise", "Training"]
+  - {ad: Ars Technica, kategori: otomatik, url: "https://feeds.arstechnica.com/arstechnica/index"}

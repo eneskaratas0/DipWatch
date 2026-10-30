@@ -6,6 +6,7 @@
   --muhur: #1d4e89; --odak: #1d4e89;
   --b-orta_dogu: #8c5e12; --b-rusya_ukrayna_kafkasya: #7a3b4e; --b-avrupa: #2f5d9e; --b-asya_pasifik: #1b6b60;
   --b-afrika: #59661a; --b-amerika: #7a4391; --b-turkiye: #a33232; --b-kuresel: #4f5a63;
+  --b-tekno: #0b6a87; --k-siber: #a3462a; --k-tekno: #0b6a87;
   --serif: "Newsreader", Georgia, "Times New Roman", serif;
   --sans: "Public Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   color-scheme: light dark;
@@ -16,11 +17,13 @@
     --muhur: #8db8ec; --odak: #8db8ec;
     --b-orta_dogu: #d39a3c; --b-rusya_ukrayna_kafkasya: #c9798f; --b-avrupa: #79a3e0; --b-asya_pasifik: #4fb3a3;
     --b-afrika: #a7b552; --b-amerika: #b88fd0; --b-turkiye: #e07070; --b-kuresel: #9aa6b1;
+    --b-tekno: #5cc0de; --k-siber: #e58a6c; --k-tekno: #5cc0de;
   }
 }
 .b-orta_dogu { --b: var(--b-orta_dogu); } .b-rusya_ukrayna_kafkasya { --b: var(--b-rusya_ukrayna_kafkasya); }
 .b-avrupa { --b: var(--b-avrupa); } .b-asya_pasifik { --b: var(--b-asya_pasifik); } .b-afrika { --b: var(--b-afrika); }
 .b-amerika { --b: var(--b-amerika); } .b-turkiye { --b: var(--b-turkiye); } .b-kuresel { --b: var(--b-kuresel); }
+.b-tekno { --b: var(--b-tekno); }
 
 * { box-sizing: border-box; }
 body { margin: 0; background: var(--kagit); color: var(--murekkep); font: 17px/1.6 var(--sans); }
@@ -66,9 +69,9 @@ footer { max-width: 920px; margin: 24px auto 40px; padding: 16px; color: var(--s
 /* Araçlar */
 .araclar { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 18px; margin: 22px 0 4px; }
 .ara-kutu { flex: 1 1 280px; }
-#ara { width: 100%; min-height: 44px; padding: 10px 12px; font: inherit; font-size: 16px; color: var(--murekkep);
+#ara, #tekno-ara { width: 100%; min-height: 44px; padding: 10px 12px; font: inherit; font-size: 16px; color: var(--murekkep);
   background: var(--yuzey); border: 1px solid var(--cizgi); border-radius: 4px; }
-#ara:focus { border-color: var(--odak); }
+#ara:focus, #tekno-ara:focus { border-color: var(--odak); }
 .arsiv-link, .arsiv-donus { display: inline-flex; align-items: center; min-height: 44px; font-size: 14px;
   color: var(--soluk); text-decoration: none; white-space: nowrap; }
 .arsiv-link:hover, .arsiv-donus:hover { color: var(--murekkep); text-decoration: underline; }
@@ -152,17 +155,34 @@ footer { max-width: 920px; margin: 24px auto 40px; padding: 16px; color: var(--s
 .cizelge-devam details[open] summary::before { content: "–"; }
 .cizelge-ic-govde { padding-top: 10px; }
 
-.dil-filtre { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 16px; }
-.dil-filtre button { min-height: 44px; padding: 0 16px; font: inherit; font-size: 14px; color: var(--soluk);
+.dil-filtre, .tekno-kategori { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 16px; }
+.dil-filtre button, .tekno-kategori button { min-height: 44px; padding: 0 16px; font: inherit; font-size: 14px; color: var(--soluk);
   background: var(--yuzey); border: 1px solid var(--cizgi); border-radius: 16px; cursor: pointer; }
-.dil-filtre button:hover { color: var(--murekkep); }
-.dil-filtre button[aria-pressed="true"] { color: var(--murekkep); font-weight: 600; border-color: var(--muhur); }
+.dil-filtre button:hover, .tekno-kategori button:hover { color: var(--murekkep); }
+.dil-filtre button[aria-pressed="true"], .tekno-kategori button[aria-pressed="true"] { color: var(--murekkep); font-weight: 600; border-color: var(--muhur); }
 
 .kaynaklar { list-style: none; padding: 0; columns: 2 300px; column-gap: 32px; }
 .kaynaklar > li { break-inside: avoid; margin: 0 0 16px; }
 .kaynaklar h3 { font-size: 17px; margin: 0 0 4px; }
 .kaynaklar ul { padding-left: 18px; margin: 0; }
 .kaynaklar ul li { margin: 3px 0; overflow-wrap: anywhere; font-size: 15px; }
+
+/* Teknoloji ve siber güvenlik sayfası (web/teknoloji.py). Renk burada bölgeyi değil kategoriyi gösterir. */
+.menu-ayrac { flex: none; width: 1px; margin: 12px 6px; background: var(--cizgi); }
+.k-siber_guvenlik { --k: var(--k-siber); } .k-teknoloji { --k: var(--k-tekno); }
+.tekno-araclar .ara-kutu { flex-basis: 100%; }
+.tekno-araclar .tekno-kategori { margin: 0; }
+.kaynak-sec { display: inline-flex; align-items: center; gap: 8px; font-size: 14px; color: var(--soluk); }
+#tekno-kaynak { min-height: 44px; padding: 0 10px; font: inherit; font-size: 15px; color: var(--murekkep);
+  background: var(--yuzey); border: 1px solid var(--cizgi); border-radius: 4px; max-width: 100%; }
+.tekno-liste { list-style: none; margin: 0; padding: 0; }
+.tekno-haber { padding: 14px 0 14px 16px; border-bottom: 1px solid var(--cizgi); border-left: 3px solid var(--k, var(--cizgi)); }
+.tekno-haber .baslik { font: 600 20px/1.3 var(--serif); color: var(--murekkep); text-decoration: none; overflow-wrap: anywhere; }
+.tekno-haber .baslik:hover { color: var(--muhur); text-decoration: underline; text-decoration-thickness: 1px; }
+.tekno-haber .ozet { margin: 6px 0 0; max-width: 72ch; font-size: 15.5px; }
+.kategori-rozet { color: var(--k, var(--soluk)); font-weight: 600; }
+.kaynak-adi { font-weight: 600; color: var(--murekkep); }
+.ayrica { margin: 6px 0 0; font-size: 14px; color: var(--soluk); }
 
 /* Başa dön: sayfa biraz kaydırılınca sağ altta belirir (JS kapalıysa hep görünür, düz bir "#" linki olarak çalışır). */
 .basa-don { position: fixed; right: 16px; bottom: 16px; z-index: 20; width: 48px; height: 48px;
@@ -189,5 +209,8 @@ footer { max-width: 920px; margin: 24px auto 40px; padding: 16px; color: var(--s
   .olay-manset .baslik { font-size: 22px; }
   .olay-manset .yayilim .sayi { font-size: 26px; }
   .cizelge li { grid-template-columns: 44px 1fr; gap: 10px; }
+  .tekno-haber { padding-left: 12px; }
+  .tekno-haber .baslik { font-size: 18px; }
+  .menu-ayrac { display: none; }
 }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }

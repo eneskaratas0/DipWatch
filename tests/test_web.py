@@ -38,6 +38,8 @@ def calistir():
     assert 'href="olay/1.html"' in index and "7 Ekim 2026, Çarşamba" in index
     assert 'href="olay/2.html"' not in index and "5 Ekim 2026, Pazartesi" not in index
     assert not (cikti / "olay" / "999.html").exists()
+    # teknoloji.json yokken de teknoloji sayfası oluşur, menüdeki link kırılmaz (bkz. tests/test_teknoloji.py)
+    assert (cikti / "teknoloji.html").exists() and 'href="teknoloji.html"' in index
 
     tek = (cikti / "tek-kaynakli.html").read_text(encoding="utf-8")
     assert 'href="olay/2.html"' in tek and "5 Ekim 2026, Pazartesi" in tek and 'href="olay/1.html"' not in tek
